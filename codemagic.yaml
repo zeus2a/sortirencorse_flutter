@@ -1,0 +1,31 @@
+workflows:
+  ios-release:
+    name: iOS App Store Release
+    max_build_duration: 60
+    integrations:
+      app_store_connect: "Clé Codemagic Sortir en Corse"
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.zeus2a.sortirencorse.ios
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build IPA for distribution
+        script: |
+          flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
