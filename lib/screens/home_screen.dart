@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blueAccent.withOpacity(0.15),
+                color: Colors.blueAccent.withValues(alpha: 0.15),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -294,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.purpleAccent.withOpacity(0.1),
+                color: Colors.purpleAccent.withValues(alpha: 0.1),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -326,9 +326,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -358,9 +358,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.15),
+                    color: Colors.blueAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -418,9 +418,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.15)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -442,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 'Sortir en Corse',
                                 style: GoogleFonts.philosopher(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,
@@ -457,14 +457,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.15)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                           ),
                           child: Text(
                             _getFormattedDate(),
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
@@ -493,13 +493,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: isGpsActive 
-                                    ? Colors.greenAccent.withOpacity(0.2)
-                                    : Colors.redAccent.withOpacity(0.2),
+                                    ? Colors.greenAccent.withValues(alpha: 0.2)
+                                    : Colors.redAccent.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isGpsActive 
-                                      ? Colors.greenAccent.withOpacity(0.5)
-                                      : Colors.redAccent.withOpacity(0.5)
+                                      ? Colors.greenAccent.withValues(alpha: 0.5)
+                                      : Colors.redAccent.withValues(alpha: 0.5)
                                 ),
                               ),
                               child: Row(
@@ -560,9 +560,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.orangeAccent.withOpacity(0.2),
+                            color: Colors.orangeAccent.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.orangeAccent.withOpacity(0.5)),
+                            border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.5)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -587,9 +587,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                           ),
                           child: TextField(
                             style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
@@ -629,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   "Première synchronisation en cours...",
                   textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
-                    color: Colors.orangeAccent.withOpacity(0.9),
+                    color: Colors.orangeAccent.withValues(alpha: 0.9),
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
@@ -663,8 +663,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFF0A0A0A),
                   ),
                   child: Shimmer.fromColors(
-                    baseColor: Colors.white.withOpacity(0.05),
-                    highlightColor: Colors.white.withOpacity(0.15),
+                    baseColor: Colors.white.withValues(alpha: 0.05),
+                    highlightColor: Colors.white.withValues(alpha: 0.15),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(32),
@@ -726,12 +726,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.1),
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
-                    side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                   ),
                   elevation: 0,
                 ),
@@ -767,7 +767,7 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -802,7 +802,7 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: _refreshEvents,
               style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.1),
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
               child: Text('Réessayer', style: GoogleFonts.outfit(color: Colors.white)),

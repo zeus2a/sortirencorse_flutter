@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -45,7 +46,7 @@ class UpdateService {
         }
       }
     } catch (e) {
-      print('Erreur vérification mise à jour: $e');
+      debugPrint('Erreur vérification mise à jour: $e');
     }
     return null;
   }
@@ -59,7 +60,7 @@ class UpdateService {
       
       return serverInfo.buildNumber > currentBuildNumber;
     } catch (e) {
-      print('Erreur récupération version locale: $e');
+      debugPrint('Erreur récupération version locale: $e');
       return false;
     }
   }
@@ -81,7 +82,7 @@ class UpdateService {
         }
       }
     } catch (e) {
-      print('Erreur tracking: $e');
+      debugPrint('Erreur tracking: $e');
     }
   }
 }

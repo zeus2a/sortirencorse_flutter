@@ -44,6 +44,8 @@ dependencies:
   in_app_review: ^2.0.12
   in_app_update: ^4.2.5
 
+  flutter_map: any
+  latlong2: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

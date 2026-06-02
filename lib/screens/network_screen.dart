@@ -101,9 +101,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: TextField(
                   style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
@@ -130,9 +130,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
           child: Container(
             height: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: TabBar(
               controller: _tabController,
@@ -140,8 +140,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
-                color: Colors.purpleAccent.withOpacity(0.3),
-                border: Border.all(color: Colors.purpleAccent.withOpacity(0.5)),
+                color: Colors.purpleAccent.withValues(alpha: 0.3),
+                border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.5)),
               ),
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
@@ -180,9 +180,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -200,8 +200,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                     imageUrl: item.imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.white.withOpacity(0.05),
-                      highlightColor: Colors.white.withOpacity(0.15),
+                      baseColor: Colors.white.withValues(alpha: 0.05),
+                      highlightColor: Colors.white.withValues(alpha: 0.15),
                       child: Container(color: Colors.white),
                     ),
                     errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.white24),
@@ -211,7 +211,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                 Container(
                   width: 100,
                   height: 100,
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   child: Icon(
                     item.type == 'event_venue' ? Icons.location_city_rounded : Icons.handshake_rounded,
                     color: Colors.white24,
@@ -232,9 +232,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           margin: const EdgeInsets.only(bottom: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.orangeAccent.withOpacity(0.15),
+                            color: Colors.orangeAccent.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                            border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             item.categorie!.toUpperCase(),
@@ -287,12 +287,12 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
           margin: const EdgeInsets.only(bottom: 16),
           height: 100,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.02),
+            color: Colors.white.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Shimmer.fromColors(
-            baseColor: Colors.white.withOpacity(0.02),
-            highlightColor: Colors.white.withOpacity(0.05),
+            baseColor: Colors.white.withValues(alpha: 0.02),
+            highlightColor: Colors.white.withValues(alpha: 0.05),
             child: Row(
               children: [
                 Container(width: 100, height: 100, color: Colors.white),
@@ -346,7 +346,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -388,7 +388,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                     else
                       Container(
                         height: 150,
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         child: Stack(
                           children: [
                             Center(
@@ -423,9 +423,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.orangeAccent.withOpacity(0.15),
+                                color: Colors.orangeAccent.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                                border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
                               ),
                               child: Text(
                                 item.categorie!.toUpperCase(),
@@ -473,7 +473,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           Text(
                             item.description.isNotEmpty ? item.description : 'Aucune description disponible pour ce profil.',
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 16,
                               height: 1.5,
                             ),
@@ -499,7 +499,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   elevation: 8,
-                                  shadowColor: Colors.blueAccent.withOpacity(0.5),
+                                  shadowColor: Colors.blueAccent.withValues(alpha: 0.5),
                                 ),
                                 icon: const Icon(Icons.open_in_new),
                                 label: Text(
@@ -566,12 +566,12 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),

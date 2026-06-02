@@ -2,37 +2,90 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latlong2;
 import '../models/event.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   final Event event;
 
-  const EventDetailsScreen({Key? key, required this.event}) : super(key: key);
+  const EventDetailsScreen({super.key, required this.event});
 
-  Future<void> _launchUrl(String url) async {
-    if (!await launchUrl(Uri.parse(url))) {
-      throw Exception('Could not launch $url');
-    }
-  }
-
-  Future<void> _openMap(String address, double lat, double lng) async {
+  Future<void> _openMap(BuildContext context, String address, double lat, double lng) async {
     String googleMapsUrl;
     String appleMapsUrl;
+    
+    String wazeUrl;
     
     if (lat == 0.0 && lng == 0.0) {
       final encodedAddress = Uri.encodeComponent(address);
       googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$encodedAddress";
       appleMapsUrl = "https://maps.apple.com/?q=$encodedAddress";
+      wazeUrl = "https://waze.com/ul?q=$encodedAddress&navigate=yes";
     } else {
       googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
       appleMapsUrl = "https://maps.apple.com/?q=$lat,$lng";
+      wazeUrl = "https://waze.com/ul?ll=$lat,$lng&navigate=yes";
     }
-    
-    if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
-      await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
-    } else if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
-      await launchUrl(Uri.parse(appleMapsUrl), mode: LaunchMode.externalApplication);
-    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  "Ouvrir avec",
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (Theme.of(context).platform == TargetPlatform.iOS)
+                ListTile(
+                  leading: const Icon(Icons.map, color: Colors.blueAccent),
+                  title: Text('Plans (Apple Maps)', style: GoogleFonts.outfit(color: Colors.white)),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
+                      await launchUrl(Uri.parse(appleMapsUrl), mode: LaunchMode.externalApplication);
+                    }
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.location_on, color: Colors.redAccent),
+                title: Text('Google Maps', style: GoogleFonts.outfit(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+                    await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.navigation, color: Colors.cyan),
+                title: Text('Waze', style: GoogleFonts.outfit(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (await canLaunchUrl(Uri.parse(wazeUrl))) {
+                    await launchUrl(Uri.parse(wazeUrl), mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -140,6 +193,72 @@ class EventDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   
+                  if (event.lat != 0.0 && event.lng != 0.0) ...[
+                    const SizedBox(height: 30),
+                    const Divider(color: Colors.white10),
+                    const SizedBox(height: 30),
+                    Text(
+                      "Localisation",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SizedBox(
+                        height: 200,
+                        width: double.infinity,
+                        child: FlutterMap(
+                          options: MapOptions(
+                            initialCenter: latlong2.LatLng(event.lat, event.lng),
+                            initialZoom: 15.0,
+                            interactionOptions: const InteractionOptions(
+                              flags: InteractiveFlag.none, // Bloque le zoom/scroll pour l'UX
+                            ),
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                              subdomains: const ['a', 'b', 'c', 'd'],
+                              userAgentPackageName: 'com.zeus2a.sortirencorse',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: latlong2.LatLng(event.lat, event.lng),
+                                  width: 44,
+                                  height: 44,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF9E00),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 3),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFFF9E00).withValues(alpha: 0.6),
+                                          blurRadius: 16,
+                                          spreadRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.music_note_rounded,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 100), // Espace pour le bouton du bas
                 ],
               ),
@@ -159,7 +278,7 @@ class EventDetailsScreen extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () => _openMap(event.locationAddress, event.lat, event.lng),
+                onPressed: () => _openMap(context, event.locationAddress, event.lat, event.lng),
                 icon: const Icon(Icons.directions, color: Colors.white, size: 18),
                 label: Text("ITINÉRAIRE", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
                 style: ElevatedButton.styleFrom(

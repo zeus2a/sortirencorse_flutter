@@ -119,12 +119,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return; // Succès, on s'arrête là
         }
       } catch (e) {
-        print("Erreur InAppUpdate : $e");
+        debugPrint("Erreur InAppUpdate : $e");
         // En cas d'erreur ou si refusé, on "fallback" sur le lien normal ci-dessous
       }
     }
 
     // iOS ou Fallback Android : Ouverture classique du Store
+    if (!mounted) return;
     final url = Theme.of(context).platform == TargetPlatform.iOS 
         ? _updateInfo?.appStoreUrl 
         : _updateInfo?.playStoreUrl;
@@ -214,8 +215,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _isLocationEnabled,
               onChanged: _toggleLocation,
-              activeColor: Colors.blueAccent,
-              activeTrackColor: Colors.blueAccent.withOpacity(0.3),
+              activeThumbColor: Colors.blueAccent,
+              activeTrackColor: Colors.blueAccent.withValues(alpha: 0.3),
               inactiveThumbColor: Colors.white54,
               inactiveTrackColor: Colors.white10,
             ),
@@ -297,9 +298,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: ListTile(
         onTap: onTap,
@@ -307,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: iconColor, size: 24),
@@ -332,12 +333,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.redAccent.withOpacity(0.2), Colors.orangeAccent.withOpacity(0.1)],
+          colors: [Colors.redAccent.withValues(alpha: 0.2), Colors.orangeAccent.withValues(alpha: 0.1)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +347,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.2), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.2), shape: BoxShape.circle),
                 child: const Icon(Icons.new_releases_rounded, color: Colors.redAccent, size: 24),
               ),
               const SizedBox(width: 12),

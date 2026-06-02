@@ -60,7 +60,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
             color: const Color(0xFF0A0A0A), // Very dark gray, almost black
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 30,
                 offset: const Offset(0, 15),
               ),
@@ -99,7 +99,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.6),
+                      Colors.black.withValues(alpha: 0.6),
                       Colors.black,
                     ],
                     stops: const [0.3, 0.6, 1.0],
@@ -121,7 +121,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -165,9 +165,9 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -210,7 +210,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -246,7 +246,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.location_on_rounded, color: Colors.white70, size: 14),

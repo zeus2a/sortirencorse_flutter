@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,7 @@ class ApiService {
         return data.map((item) => Event.fromJson(item)).toList();
       }
     } catch (e) {
-      print('Erreur lecture cache: $e');
+      debugPrint('Erreur lecture cache: $e');
     }
     return [];
   }
@@ -60,7 +61,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Erreur fetchVenues: $e');
+      debugPrint('Erreur fetchVenues: $e');
       return [];
     }
   }
@@ -76,7 +77,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Erreur fetchPrestataires: $e');
+      debugPrint('Erreur fetchPrestataires: $e');
       return [];
     }
   }
