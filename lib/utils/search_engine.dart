@@ -3,9 +3,11 @@ import '../models/event.dart';
 
 class SmartSearch {
   static String _normalize(String input) {
-    var withDia = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
-    var withoutDia = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
-    
+    var withDia =
+        'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+    var withoutDia =
+        'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
+
     String str = input.toLowerCase();
     for (int i = 0; i < withDia.length; i++) {
       str = str.replaceAll(withDia[i], withoutDia[i]);
@@ -39,12 +41,12 @@ class SmartSearch {
     // Filter by query if not empty
     if (!isSearchEmpty) {
       final queryWords = normalizedQuery.split(' ');
-      
+
       processedList = processedList.where((event) {
         final searchString = _normalize(
           '${event.title} ${event.locationAddress} ${event.segmentLabel} ${event.description}',
         );
-        
+
         // Simple logic: all words in the query must be found in the event's data
         bool matchesAll = true;
         for (final word in queryWords) {
@@ -60,20 +62,28 @@ class SmartSearch {
 
     // Sort the list
     processedList.sort((a, b) {
-      // 1. Distance takes precedence if available
       if (a.distance != null && b.distance != null) {
-        // If difference is less than 5km, sort by date instead to prioritize sooner events nearby
-        if ((a.distance! - b.distance!).abs() < 5.0) {
-           return a.dateStart.compareTo(b.dateStart);
+        bool aNear = a.distance! <= 25.0;
+        bool bNear = b.distance! <= 25.0;
+        
+        if (aNear && bNear) {
+          // Both are within 25km, sort by date
+          return a.dateStart.compareTo(b.dateStart);
+        } else if (aNear && !bNear) {
+          return -1; // a is near, so it comes first
+        } else if (!aNear && bNear) {
+          return 1; // b is near, so it comes first
+        } else {
+          // Both are farther than 25km, sort by date
+          return a.dateStart.compareTo(b.dateStart);
         }
-        return a.distance!.compareTo(b.distance!);
       }
-      
-      // 2. If only one has distance, it goes first
+
+      // If only one has distance, it goes first
       if (a.distance != null && b.distance == null) return -1;
       if (a.distance == null && b.distance != null) return 1;
-      
-      // 3. Otherwise, sort chronologically
+
+      // Otherwise, sort chronologically
       return a.dateStart.compareTo(b.dateStart);
     });
 

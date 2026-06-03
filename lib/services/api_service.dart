@@ -14,7 +14,7 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? cachedData = prefs.getString(cacheKey);
-      
+
       if (cachedData != null) {
         List<dynamic> data = json.decode(cachedData);
         return data.map((item) => Event.fromJson(item)).toList();
@@ -33,15 +33,15 @@ class ApiService {
       if (response.statusCode == 200) {
         // Sauvegarde silencieuse en local
         final prefs = await SharedPreferences.getInstance();
-        
+
         // On vérifie que la donnée est bien du JSON valide et non vide
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         List<dynamic> data = jsonResponse['data'] ?? [];
-        
+
         if (data.isNotEmpty) {
-           await prefs.setString(cacheKey, json.encode(data));
+          await prefs.setString(cacheKey, json.encode(data));
         }
-        
+
         return data.map((item) => Event.fromJson(item)).toList();
       } else {
         throw Exception('Erreur serveur: ${response.statusCode}');
@@ -57,7 +57,9 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/?action=venues'));
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
-        return data.map((item) => NetworkItem.fromJson(item, 'event_venue')).toList();
+        return data
+            .map((item) => NetworkItem.fromJson(item, 'event_venue'))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -69,7 +71,8 @@ class ApiService {
   // Récupération des Prestataires (profils UserPro)
   Future<List<NetworkItem>> fetchPrestataires() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/?action=prestataires'));
+      final response =
+          await http.get(Uri.parse('$baseUrl/?action=prestataires'));
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         List<dynamic> data = jsonResponse['data'] ?? [];

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 class UpdateInfo {
   final String latestVersion;
   final int buildNumber;
@@ -34,7 +35,8 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  static const String _versionUrl = 'https://api.corsemusicevents.fr/?action=version';
+  static const String _versionUrl =
+      'https://api.corsemusicevents.fr/?action=version';
 
   static Future<UpdateInfo?> checkForUpdates() async {
     try {
@@ -54,10 +56,10 @@ class UpdateService {
   static Future<bool> isUpdateAvailable(UpdateInfo serverInfo) async {
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      
+
       // Compare par numéro de build (plus fiable que la string de version)
       int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
-      
+
       return serverInfo.buildNumber > currentBuildNumber;
     } catch (e) {
       debugPrint('Erreur récupération version locale: $e');
@@ -69,14 +71,15 @@ class UpdateService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final hasPinged = prefs.getBool('has_pinged_install') ?? false;
-      
+
       if (!hasPinged) {
         String os = 'android';
         if (Platform.isIOS) os = 'ios';
-        
-        final trackUrl = 'https://api.corsemusicevents.fr/?action=track_install&os=$os';
+
+        final trackUrl =
+            'https://api.corsemusicevents.fr/?action=track_install&os=$os';
         final response = await http.get(Uri.parse(trackUrl));
-        
+
         if (response.statusCode == 200) {
           await prefs.setBool('has_pinged_install', true);
         }

@@ -1,313 +1,523 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as latlong2;
+import 'package:share_plus/share_plus.dart';
+import 'package:map_launcher/map_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/event.dart';
 
-class EventDetailsScreen extends StatelessWidget {
+class EventDetailsScreen extends StatefulWidget {
   final Event event;
 
   const EventDetailsScreen({super.key, required this.event});
 
-  Future<void> _openMap(BuildContext context, String address, double lat, double lng) async {
-    String googleMapsUrl;
-    String appleMapsUrl;
-    
-    String wazeUrl;
-    
+  @override
+  State<EventDetailsScreen> createState() => _EventDetailsScreenState();
+}
+
+class _EventDetailsScreenState extends State<EventDetailsScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _contentAnimController;
+  late Animation<double> _badgeFade;
+  late Animation<Offset> _titleSlide;
+  late Animation<double> _titleFade;
+  late Animation<double> _infoFade;
+  late Animation<double> _descFade;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _contentAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _badgeFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _contentAnimController,
+          curve: const Interval(0.0, 0.3, curve: Curves.easeOut)),
+    );
+
+    _titleSlide =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+          parent: _contentAnimController,
+          curve: const Interval(0.1, 0.5, curve: Curves.easeOutCubic)),
+    );
+    _titleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _contentAnimController,
+          curve: const Interval(0.1, 0.5, curve: Curves.easeOut)),
+    );
+
+    _infoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _contentAnimController,
+          curve: const Interval(0.3, 0.7, curve: Curves.easeOut)),
+    );
+
+    _descFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _contentAnimController,
+          curve: const Interval(0.5, 1.0, curve: Curves.easeOut)),
+    );
+
+    // Delay to let Hero animation settle first
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _contentAnimController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _contentAnimController.dispose();
+    super.dispose();
+  }
+
+
+
+  Future<void> _openMap(String address, double lat, double lng) async {
     if (lat == 0.0 && lng == 0.0) {
       final encodedAddress = Uri.encodeComponent(address);
-      googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$encodedAddress";
-      appleMapsUrl = "https://maps.apple.com/?q=$encodedAddress";
-      wazeUrl = "https://waze.com/ul?q=$encodedAddress&navigate=yes";
-    } else {
-      googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
-      appleMapsUrl = "https://maps.apple.com/?q=$lat,$lng";
-      wazeUrl = "https://waze.com/ul?ll=$lat,$lng&navigate=yes";
+      final googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$encodedAddress";
+      if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+        await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
+      }
+      return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0F172A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  "Ouvrir avec",
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+    try {
+      final availableMaps = await MapLauncher.installedMaps;
+      if (availableMaps.isEmpty) {
+        final googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
+        if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+          await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (BuildContext context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: Wrap(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Ouvrir avec...',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    for (var map in availableMaps)
+                      ListTile(
+                        onTap: () {
+                          Navigator.pop(context);
+                          map.showMarker(
+                            coords: Coords(lat, lng),
+                            title: widget.event.title,
+                            description: address,
+                          );
+                        },
+                        title: Text(
+                          map.mapName,
+                          style: GoogleFonts.outfit(
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        leading: SvgPicture.asset(
+                          map.icon,
+                          height: 30.0,
+                          width: 30.0,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (Theme.of(context).platform == TargetPlatform.iOS)
-                ListTile(
-                  leading: const Icon(Icons.map, color: Colors.blueAccent),
-                  title: Text('Plans (Apple Maps)', style: GoogleFonts.outfit(color: Colors.white)),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
-                      await launchUrl(Uri.parse(appleMapsUrl), mode: LaunchMode.externalApplication);
-                    }
-                  },
-                ),
-              ListTile(
-                leading: const Icon(Icons.location_on, color: Colors.redAccent),
-                title: Text('Google Maps', style: GoogleFonts.outfit(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
-                    await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.navigation, color: Colors.cyan),
-                title: Text('Waze', style: GoogleFonts.outfit(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  if (await canLaunchUrl(Uri.parse(wazeUrl))) {
-                    await launchUrl(Uri.parse(wazeUrl), mode: LaunchMode.externalApplication);
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('Error launching map: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF050505) : const Color(0xFFF8F9FA);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF020617),
+      backgroundColor: bgColor,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
-          // Image avec Hero animation et bouton retour
+          // Image avec Hero animation et bouton retour glassmorphism
           SliverAppBar(
-            expandedHeight: 400.0,
+            expandedHeight: 420.0,
             pinned: true,
-            backgroundColor: const Color(0xFF020617),
+            backgroundColor: bgColor,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black38,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(50),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white, size: 18),
+                      onPressed: () {
+                        // HapticFeedback removed for speed
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: 'event-image-${event.id}',
-                child: CachedNetworkImage(
-                  imageUrl: event.imageUrl,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          
-          // Contenu des détails
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              background: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // Badge et Source
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: event.segment == 'party' ? Colors.purple : Colors.amber,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          event.segmentLabel.toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        "Source: ${event.source.toUpperCase()}",
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Titre
-                  Text(
-                    event.title,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                  Hero(
+                    tag: 'event-image-${widget.event.id}',
+                    child: CachedNetworkImage(
+                      imageUrl: widget.event.imageUrl,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  
-                  // Infos Date et Lieu
-                  _buildInfoRow(Icons.calendar_today, event.dateFormatted, Colors.blueAccent),
-                  const SizedBox(height: 12),
-                  _buildInfoRow(Icons.location_on, event.locationAddress, Colors.redAccent),
-                  
-                  const SizedBox(height: 30),
-                  const Divider(color: Colors.white10),
-                  const SizedBox(height: 30),
-                  
-                  // Description
-                  Text(
-                    "À propos",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    event.description,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white70,
-                      fontSize: 16,
-                      height: 1.6,
-                    ),
-                  ),
-                  
-                  if (event.lat != 0.0 && event.lng != 0.0) ...[
-                    const SizedBox(height: 30),
-                    const Divider(color: Colors.white10),
-                    const SizedBox(height: 30),
-                    Text(
-                      "Localisation",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  // Premium gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.transparent,
+                          bgColor.withValues(alpha: 0.3),
+                          bgColor.withValues(alpha: 0.8),
+                          bgColor,
+                        ],
+                        stops: const [0.0, 0.4, 0.6, 0.8, 1.0],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: SizedBox(
-                        height: 200,
-                        width: double.infinity,
-                        child: FlutterMap(
-                          options: MapOptions(
-                            initialCenter: latlong2.LatLng(event.lat, event.lng),
-                            initialZoom: 15.0,
-                            interactionOptions: const InteractionOptions(
-                              flags: InteractiveFlag.none, // Bloque le zoom/scroll pour l'UX
-                            ),
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                              subdomains: const ['a', 'b', 'c', 'd'],
-                              userAgentPackageName: 'com.zeus2a.sortirencorse',
-                            ),
-                            MarkerLayer(
-                              markers: [
-                                Marker(
-                                  point: latlong2.LatLng(event.lat, event.lng),
-                                  width: 44,
-                                  height: 44,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFF9E00),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 3),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFFF9E00).withValues(alpha: 0.6),
-                                          blurRadius: 16,
-                                          spreadRadius: 4,
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.music_note_rounded,
-                                      color: Colors.white,
-                                      size: 22,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 100), // Espace pour le bouton du bas
+                  ),
                 ],
               ),
             ),
           ),
+
+          // Contenu des détails avec animations staggered
+          SliverToBoxAdapter(
+            child: AnimatedBuilder(
+              animation: _contentAnimController,
+              builder: (context, _) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Badge et Source
+                      FadeTransition(
+                        opacity: _badgeFade,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: widget.event.segment == 'party'
+                                    ? Colors.purple
+                                    : Colors.amber,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                widget.event.segmentLabel.toUpperCase(),
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "Source: ${widget.event.source.toUpperCase()}",
+                              style: GoogleFonts.outfit(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Titre animé
+                      SlideTransition(
+                        position: _titleSlide,
+                        child: FadeTransition(
+                          opacity: _titleFade,
+                          child: Text(
+                            widget.event.title,
+                            style: GoogleFonts.outfit(
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1A1A2E),
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Info Cards glassmorphism
+                      FadeTransition(
+                        opacity: _infoFade,
+                        child: Column(
+                          children: [
+                            _buildInfoCard(
+                              icon: Icons.calendar_today_rounded,
+                              text: '${widget.event.dateFormatted} ${widget.event.dateStart.year} à ${widget.event.dateStart.hour}h${widget.event.dateStart.minute.toString().padLeft(2, '0')}',
+                              color: Colors.blueAccent,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoCard(
+                              icon: Icons.location_on_rounded,
+                              text: widget.event.locationAddress,
+                              color: Colors.redAccent,
+                              isDark: isDark,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+                      FadeTransition(
+                        opacity: _descFade,
+                        child: Divider(
+                          color: isDark
+                              ? Colors.white10
+                              : Colors.black.withValues(alpha: 0.06),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Description
+                      FadeTransition(
+                        opacity: _descFade,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "À propos",
+                              style: GoogleFonts.outfit(
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1A1A2E),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              widget.event.description,
+                              style: GoogleFonts.outfit(
+                                color: isDark ? Colors.white70 : Colors.black54,
+                                fontSize: 16,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(
+                          height: 120), // Espace pour les boutons du bas
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
-      
+
       // Boutons d'action flottants en bas
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF0F172A),
-          border: Border(top: BorderSide(color: Colors.white10)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _openMap(context, event.locationAddress, event.lat, event.lng),
-                icon: const Icon(Icons.directions, color: Colors.white, size: 18),
-                label: Text("ITINÉRAIRE", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
+      bottomSheet: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+            ),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.9),
+              border: Border(
+                top: BorderSide(
+                  color:
+                      isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
                 ),
               ),
             ),
-          ],
+            child: Row(
+              children: [
+                // Itinéraire button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // HapticFeedback removed for speed
+                      _openMap(widget.event.locationAddress, widget.event.lat,
+                          widget.event.lng);
+                    },
+                    icon: const Icon(Icons.directions_rounded,
+                        color: Colors.white, size: 20),
+                    label: Text(
+                      "ITINÉRAIRE",
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Partager button
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      // HapticFeedback removed for speed
+                      Share.share(
+                        '🎉 ${widget.event.title}\n📅 ${widget.event.dateFormatted}\n📍 ${widget.event.locationAddress}\n\nDécouvre cet événement sur Sortir en Corse !',
+                      );
+                    },
+                    icon: Icon(
+                      Icons.share_rounded,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                      size: 22,
+                    ),
+                    padding: const EdgeInsets.all(14),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
-          ),
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required bool isDark,
+    bool hasArrow = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.black.withValues(alpha: 0.06),
         ),
-      ],
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.outfit(
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (hasArrow)
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: isDark ? Colors.white24 : Colors.black26,
+              size: 14,
+            ),
+        ],
+      ),
     );
   }
 }

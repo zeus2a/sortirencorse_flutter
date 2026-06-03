@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,14 +16,15 @@ class NetworkScreen extends StatefulWidget {
   State<NetworkScreen> createState() => _NetworkScreenState();
 }
 
-class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProviderStateMixin {
+class _NetworkScreenState extends State<NetworkScreen>
+    with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   late TabController _tabController;
-  
+
   List<NetworkItem> _prestataires = [];
   List<NetworkItem> _venues = [];
   List<NetworkItem> _filteredItems = [];
-  
+
   bool _isLoading = true;
   String _searchQuery = '';
 
@@ -50,7 +52,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
     try {
       final prestataires = await _apiService.fetchPrestataires();
       final venues = await _apiService.fetchVenues();
-      
+
       if (mounted) {
         setState(() {
           _prestataires = prestataires;
@@ -67,8 +69,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
   }
 
   void _runSearch() {
-    List<NetworkItem> currentList = _tabController.index == 0 ? _prestataires : _venues;
-    
+    List<NetworkItem> currentList =
+        _tabController.index == 0 ? _prestataires : _venues;
+
     if (_searchQuery.isEmpty) {
       setState(() {
         _filteredItems = currentList;
@@ -77,9 +80,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
       final query = _searchQuery.toLowerCase();
       setState(() {
         _filteredItems = currentList.where((item) {
-          return item.title.toLowerCase().contains(query) || 
-                 item.description.toLowerCase().contains(query) ||
-                 (item.categorie?.toLowerCase().contains(query) ?? false);
+          return item.title.toLowerCase().contains(query) ||
+              item.description.toLowerCase().contains(query) ||
+              (item.categorie?.toLowerCase().contains(query) ?? false);
         }).toList();
       });
     }
@@ -91,7 +94,7 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
       children: [
         // SafeArea & Header Space
         const SizedBox(height: 50),
-        
+
         // Search Bar Glassmorphism
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
@@ -145,7 +148,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
               ),
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
-              labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14),
+              labelStyle:
+                  GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14),
               tabs: const [
                 Tab(text: 'Prestataires'),
                 Tab(text: 'Lieux'),
@@ -161,7 +165,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
               : _filteredItems.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
-                      padding: const EdgeInsets.only(top: 10, bottom: 120, left: 24, right: 24),
+                      padding: const EdgeInsets.only(
+                          top: 10, bottom: 120, left: 24, right: 24),
                       itemCount: _filteredItems.length,
                       itemBuilder: (context, index) {
                         return _buildNetworkCard(_filteredItems[index]);
@@ -174,108 +179,118 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
 
   Widget _buildNetworkCard(NetworkItem item) {
     final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
-    
+
     return GestureDetector(
-      onTap: () => _showDetailsBottomSheet(item),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            children: [
-              // Image Thumbnail
-              if (hasImage)
-                Container(
-                  width: 100,
-                  height: 100,
-                  color: Colors.black12,
-                  child: CachedNetworkImage(
-                    imageUrl: item.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.white.withValues(alpha: 0.05),
-                      highlightColor: Colors.white.withValues(alpha: 0.15),
-                      child: Container(color: Colors.white),
-                    ),
-                    errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.white24),
-                  ),
-                )
-              else
-                Container(
-                  width: 100,
-                  height: 100,
-                  color: Colors.white.withValues(alpha: 0.02),
-                  child: Icon(
-                    item.type == 'event_venue' ? Icons.location_city_rounded : Icons.handshake_rounded,
-                    color: Colors.white24,
-                    size: 40,
-                  ),
-                ),
-                
-              // Content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Badge catégorie
-                      if (item.categorie != null && item.categorie!.isNotEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orangeAccent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            item.categorie!.toUpperCase(),
-                            style: GoogleFonts.outfit(
-                              color: Colors.orangeAccent,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      Text(
-                        item.title,
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.description.isNotEmpty ? item.description : 'Pas de présentation disponible.',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white54,
-                          fontSize: 12,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+        onTap: () => _showDetailsBottomSheet(item),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
-        ),
-      ),
-    ));
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Row(
+                children: [
+                  // Image Thumbnail
+                  if (hasImage)
+                    Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.black12,
+                      child: CachedNetworkImage(
+                        imageUrl: item.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: Colors.white.withValues(alpha: 0.05),
+                          highlightColor: Colors.white.withValues(alpha: 0.15),
+                          child: Container(color: Colors.white),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.white24),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.white.withValues(alpha: 0.02),
+                      child: Icon(
+                        item.type == 'event_venue'
+                            ? Icons.location_city_rounded
+                            : Icons.handshake_rounded,
+                        color: Colors.white24,
+                        size: 40,
+                      ),
+                    ),
+
+                  // Content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Badge catégorie
+                          if (item.categorie != null &&
+                              item.categorie!.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orangeAccent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                    color:
+                                        Colors.orangeAccent.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                item.categorie!.toUpperCase(),
+                                style: GoogleFonts.outfit(
+                                  color: Colors.orangeAccent,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          Text(
+                            item.title,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.description.isNotEmpty
+                                ? item.description
+                                : 'Pas de présentation disponible.',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white54,
+                              fontSize: 12,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 
   Widget _buildLoadingState() {
@@ -304,7 +319,10 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                       children: [
                         Container(height: 16, width: 150, color: Colors.white),
                         const SizedBox(height: 10),
-                        Container(height: 10, width: double.infinity, color: Colors.white),
+                        Container(
+                            height: 10,
+                            width: double.infinity,
+                            color: Colors.white),
                         const SizedBox(height: 6),
                         Container(height: 10, width: 100, color: Colors.white),
                       ],
@@ -334,7 +352,11 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+        final bool hasImage =
+            item.imageUrl != null && item.imageUrl!.isNotEmpty;
+        final double headerHeight =
+            math.min(250.0, MediaQuery.of(context).size.height * 0.3);
+
         return DraggableScrollableSheet(
           initialChildSize: 0.8,
           minChildSize: 0.5,
@@ -343,7 +365,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
             return Container(
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E2C),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -353,7 +376,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                 ],
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
                 child: ListView(
                   controller: scrollController,
                   padding: EdgeInsets.zero,
@@ -365,18 +389,19 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           CachedNetworkImage(
                             imageUrl: item.imageUrl!,
                             width: double.infinity,
-                            height: 250,
+                            height: headerHeight,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Colors.white10,
-                              height: 250,
+                              height: headerHeight,
                             ),
                           ),
                           Positioned(
                             top: 20,
                             right: 20,
                             child: IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                              icon: const Icon(Icons.close,
+                                  color: Colors.white, size: 30),
                               onPressed: () => Navigator.pop(context),
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.black45,
@@ -393,7 +418,9 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           children: [
                             Center(
                               child: Icon(
-                                item.type == 'event_venue' ? Icons.location_city_rounded : Icons.handshake_rounded,
+                                item.type == 'event_venue'
+                                    ? Icons.location_city_rounded
+                                    : Icons.handshake_rounded,
                                 color: Colors.white24,
                                 size: 60,
                               ),
@@ -402,7 +429,8 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                               top: 20,
                               right: 20,
                               child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white, size: 30),
                                 onPressed: () => Navigator.pop(context),
                                 style: IconButton.styleFrom(
                                   backgroundColor: Colors.black45,
@@ -412,20 +440,24 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           ],
                         ),
                       ),
-                    
+
                     Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (item.categorie != null && item.categorie!.isNotEmpty)
+                          if (item.categorie != null &&
+                              item.categorie!.isNotEmpty)
                             Container(
                               margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.orangeAccent.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+                                border: Border.all(
+                                    color:
+                                        Colors.orangeAccent.withValues(alpha: 0.3)),
                               ),
                               child: Text(
                                 item.categorie!.toUpperCase(),
@@ -451,15 +483,61 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.location_on, color: Colors.white54, size: 16),
+                                  const Icon(Icons.location_on,
+                                      color: Colors.white54, size: 16),
                                   const SizedBox(width: 6),
                                   Text(
                                     item.ville!,
-                                    style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14),
+                                    style: GoogleFonts.outfit(
+                                        color: Colors.white54, fontSize: 14),
                                   ),
                                 ],
                               ),
                             ),
+
+                          // Social Media Row (right after location)
+                          if ((item.facebook != null &&
+                                  item.facebook!.isNotEmpty) ||
+                              (item.instagram != null &&
+                                  item.instagram!.isNotEmpty) ||
+                              (item.youtube != null &&
+                                  item.youtube!.isNotEmpty) ||
+                              (item.twitter != null &&
+                                  item.twitter!.isNotEmpty) ||
+                              (item.website != null &&
+                                  item.website!.isNotEmpty))
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Row(
+                                children: [
+                                  if (item.facebook != null &&
+                                      item.facebook!.isNotEmpty)
+                                    _buildSocialIcon(
+                                        FontAwesomeIcons.facebookF,
+                                        item.facebook!,
+                                        const Color(0xFF1877F2)),
+                                  if (item.instagram != null &&
+                                      item.instagram!.isNotEmpty)
+                                    _buildSocialIcon(
+                                        FontAwesomeIcons.instagram,
+                                        item.instagram!,
+                                        const Color(0xFFE4405F)),
+                                  if (item.twitter != null &&
+                                      item.twitter!.isNotEmpty)
+                                    _buildSocialIcon(FontAwesomeIcons.twitter,
+                                        item.twitter!, const Color(0xFF1DA1F2)),
+                                  if (item.youtube != null &&
+                                      item.youtube!.isNotEmpty)
+                                    _buildSocialIcon(FontAwesomeIcons.youtube,
+                                        item.youtube!, const Color(0xFFFF0000)),
+                                  if (item.website != null &&
+                                      item.website!.isNotEmpty)
+                                    _buildSocialIcon(FontAwesomeIcons.globe,
+                                        item.website!, Colors.white70),
+                                ],
+                              ),
+                            ),
+
                           const SizedBox(height: 24),
                           Text(
                             "À propos",
@@ -471,72 +549,16 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            item.description.isNotEmpty ? item.description : 'Aucune description disponible pour ce profil.',
+                            item.description.isNotEmpty
+                                ? item.description
+                                : 'Aucune description disponible pour ce profil.',
                             style: GoogleFonts.outfit(
                               color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 16,
                               height: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 40),
-                          
-                          // Action Buttons
-                          if (item.link.isNotEmpty)
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  final url = Uri.parse(item.link);
-                                  if (await canLaunchUrl(url)) {
-                                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 8,
-                                  shadowColor: Colors.blueAccent.withValues(alpha: 0.5),
-                                ),
-                                icon: const Icon(Icons.open_in_new),
-                                label: Text(
-                                  "Voir le profil complet",
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                          // Social Media Row
-                          if ((item.facebook != null && item.facebook!.isNotEmpty) ||
-                              (item.instagram != null && item.instagram!.isNotEmpty) ||
-                              (item.youtube != null && item.youtube!.isNotEmpty) ||
-                              (item.twitter != null && item.twitter!.isNotEmpty) ||
-                              (item.website != null && item.website!.isNotEmpty))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 24.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (item.facebook != null && item.facebook!.isNotEmpty)
-                                    _buildSocialIcon(FontAwesomeIcons.facebookF, item.facebook!, const Color(0xFF1877F2)),
-                                  if (item.instagram != null && item.instagram!.isNotEmpty)
-                                    _buildSocialIcon(FontAwesomeIcons.instagram, item.instagram!, const Color(0xFFE4405F)),
-                                  if (item.twitter != null && item.twitter!.isNotEmpty)
-                                    _buildSocialIcon(FontAwesomeIcons.twitter, item.twitter!, const Color(0xFF1DA1F2)),
-                                  if (item.youtube != null && item.youtube!.isNotEmpty)
-                                    _buildSocialIcon(FontAwesomeIcons.youtube, item.youtube!, const Color(0xFFFF0000)),
-                                  if (item.website != null && item.website!.isNotEmpty)
-                                    _buildSocialIcon(FontAwesomeIcons.globe, item.website!, Colors.white70),
-                                ],
-                              ),
-                            ),
-                            
+
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -577,10 +599,12 @@ class _NetworkScreenState extends State<NetworkScreen> with SingleTickerProvider
               ),
             ],
           ),
-          child: FaIcon(
-            icon,
-            color: color,
-            size: 24,
+          child: Center(
+            child: FaIcon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
         ),
       ),

@@ -7,7 +7,7 @@ class NetworkItem {
   final String type; // 'prestataire' or 'event_venue'
   final String? categorie;
   final String? ville;
-  
+
   // Social links
   final String? facebook;
   final String? instagram;
@@ -37,8 +37,8 @@ class NetworkItem {
       id: json['id'] ?? 0,
       title: json['name'] ?? 'Sans nom',
       description: _parseHtmlString(json['description'] ?? ''),
-      imageUrl: (json['photo'] != null && json['photo'].toString().isNotEmpty) 
-          ? json['photo'] 
+      imageUrl: (json['photo'] != null && json['photo'].toString().isNotEmpty)
+          ? json['photo']
           : null,
       link: json['profile_url'] ?? '',
       type: 'prestataire',
@@ -57,15 +57,17 @@ class NetworkItem {
     // Nettoyage du HTML pour la description
     String rawHtml = json['content']?['rendered'] ?? '';
     String parsedString = _parseHtmlString(rawHtml);
-    
+
     // Récupération de l'image via featured media
     String? imgUrl;
-    if (json['_embedded'] != null && json['_embedded']['wp:featuredmedia'] != null) {
+    if (json['_embedded'] != null &&
+        json['_embedded']['wp:featuredmedia'] != null) {
       var media = json['_embedded']['wp:featuredmedia'][0];
-      imgUrl = media['source_url'] ?? media['media_details']?['sizes']?['medium']?['source_url'];
+      imgUrl = media['source_url'] ??
+          media['media_details']?['sizes']?['medium']?['source_url'];
     }
     // Fallback : featured_media ID (pas d'URL directe, on ignore)
-    
+
     return NetworkItem(
       id: json['id'] ?? 0,
       title: _parseHtmlString(json['title']?['rendered'] ?? 'Sans nom'),
@@ -92,15 +94,16 @@ class NetworkItem {
   static String _parseHtmlString(String htmlString) {
     // Remplacement basique des balises HTML et des entités courantes
     String text = htmlString.replaceAll(RegExp(r'<[^>]*>'), '');
-    text = text.replaceAll('&rsquo;', "'")
-               .replaceAll('&lsquo;', "'")
-               .replaceAll('&amp;', '&')
-               .replaceAll('&quot;', '"')
-               .replaceAll('&nbsp;', ' ')
-               .replaceAll('&#8211;', '–')
-               .replaceAll('&#8217;', "'")
-               .replaceAll('&hellip;', '…')
-               .replaceAll(RegExp(r'\n{3,}'), '\n\n');
+    text = text
+        .replaceAll('&rsquo;', "'")
+        .replaceAll('&lsquo;', "'")
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&#8211;', '–')
+        .replaceAll('&#8217;', "'")
+        .replaceAll('&hellip;', '…')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n');
     return text.trim();
   }
 }

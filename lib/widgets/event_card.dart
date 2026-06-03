@@ -1,9 +1,11 @@
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../models/event.dart';
+import '../services/favorite_service.dart';
 
 class EventCard extends StatefulWidget {
   final Event event;
@@ -15,7 +17,8 @@ class EventCard extends StatefulWidget {
   State<EventCard> createState() => _EventCardState();
 }
 
-class _EventCardState extends State<EventCard> with SingleTickerProviderStateMixin {
+class _EventCardState extends State<EventCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -39,8 +42,12 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
+      onTapDown: (_) {
+        _controller.forward();
+      },
       onTapUp: (_) {
         _controller.reverse();
         widget.onTap();
@@ -54,13 +61,15 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
         ),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          height: 380, // Taller, more immersive
+          height: math.min(380.0, MediaQuery.of(context).size.height * 0.45),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-            color: const Color(0xFF0A0A0A), // Very dark gray, almost black
+            color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.5)
+                    : Colors.black.withValues(alpha: 0.12),
                 blurRadius: 30,
                 offset: const Offset(0, 15),
               ),
@@ -78,13 +87,20 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                     imageUrl: widget.event.imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.white10,
-                      highlightColor: Colors.white24,
-                      child: Container(color: Colors.black),
+                      baseColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                      highlightColor:
+                          isDark ? Colors.white24 : Colors.grey.shade100,
+                      child: Container(
+                          color: isDark ? Colors.black : Colors.white),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: const Color(0xFF111111),
-                      child: const Icon(Icons.image_not_supported, color: Colors.white24),
+                      color: isDark
+                          ? const Color(0xFF111111)
+                          : const Color(0xFFF0F0F0),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: isDark ? Colors.white24 : Colors.black26,
+                      ),
                     ),
                   ),
                 ),
@@ -100,7 +116,7 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                     colors: [
                       Colors.transparent,
                       Colors.black.withValues(alpha: 0.6),
-                      Colors.black,
+                      Colors.black.withValues(alpha: 0.95),
                     ],
                     stops: const [0.3, 0.6, 1.0],
                   ),
@@ -112,12 +128,10 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                 top: 20,
                 left: 20,
                 child: Container(
-                  width: 55,
-                  height: 55,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: widget.event.segment == 'party' 
-                        ? Colors.purple.shade600 
-                        : Colors.amber.shade700,
+                    color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -134,18 +148,28 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                         widget.event.dateStart.day.toString(),
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
                           height: 1.0,
                         ),
                       ),
                       Text(
-                        _getMonthName(widget.event.dateStart.month),
+                        '${widget.event.dateStart.month.toString().padLeft(2, '0')}/${widget.event.dateStart.year}',
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
+                          letterSpacing: 0.5,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'à ${widget.event.dateStart.hour}h${widget.event.dateStart.minute.toString().padLeft(2, '0')}',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -153,121 +177,152 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                 ),
               ),
 
-              // Distance Badge (Top Right)
-              if (widget.event.distance != null)
-                Positioned(
-                  top: 20,
-                  right: 20,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              'À ${widget.event.distance!.toStringAsFixed(1)} km',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+              // Top Right Actions (Favorite)
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // Favorite Heart Icon
+                    ValueListenableBuilder<List<String>>(
+                      valueListenable: FavoriteService.favoritesNotifier,
+                      builder: (context, favorites, child) {
+                        final isFav = favorites.contains(widget.event.id.toString());
+                        return GestureDetector(
+                          onTap: () async {
+                            await FavoriteService.toggleFavorite(widget.event.id.toString());
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isFav ? Colors.redAccent.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.4),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: isFav ? Colors.redAccent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1)),
+                                ),
+                                child: Icon(
+                                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                  color: isFav ? Colors.redAccent : Colors.white,
+                                  size: 20,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                ),
-
-              // Text Content (Bottom)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category Pill
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: widget.event.segment == 'party' 
-                              ? Colors.purple.shade600 
-                              : Colors.amber.shade700,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                    if (widget.event.distance != null) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                             ),
-                          ],
-                        ),
-                        child: Text(
-                          widget.event.segmentLabel.toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.near_me_rounded, color: Colors.cyanAccent, size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  widget.event.distance! < 1.0
+                                      ? '${(widget.event.distance! * 1000).toInt()} m'
+                                      : '${widget.event.distance!.toStringAsFixed(1)} km',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      // Title
-                      Text(
-                        widget.event.title,
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                          height: 1.1,
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    ],
+                  ],
+                ),
+              ),              // Text Content (Bottom)
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.event.title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.8),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      // Location
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            color: Colors.white70, size: 16),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.event.locationAddress,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.8),
+                                  blurRadius: 5,
+                                ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (widget.event.distance != null) ...[
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.location_on_rounded, color: Colors.white70, size: 14),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              widget.event.locationAddress,
-                              style: GoogleFonts.outfit(
-                                color: Colors.white70,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.event.distance! < 1.0 
+                                ? 'à ${(widget.event.distance! * 1000).toInt()} m de vous' 
+                                : 'à ${widget.event.distance!.toStringAsFixed(1)} km de vous',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              shadows: [
+                                Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 5),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -275,11 +330,5 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
         ),
       ),
     );
-  }
-
-  String _getMonthName(int month) {
-    const months = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUN', 'JUL', 'AOÛ', 'SEP', 'OCT', 'NOV', 'DÉC'];
-    if (month >= 1 && month <= 12) return months[month - 1];
-    return '';
   }
 }
