@@ -5,17 +5,17 @@ class Event {
     final lowerLabel = label.toLowerCase();
     
     if (lowerLabel.contains('party') || lowerLabel.contains('soir') || lowerLabel.contains('dj') || lowerLabel.contains('bar')) {
-      return {'color': Colors.purple, 'icon': Icons.nightlife_rounded};
+      return {'color': const Color(0xFF7B2FF7), 'icon': Icons.nightlife_rounded};
     } else if (lowerLabel.contains('concert') || lowerLabel.contains('live') || lowerLabel.contains('musique')) {
-      return {'color': Colors.redAccent, 'icon': Icons.mic_external_on_rounded};
+      return {'color': const Color(0xFFE53935), 'icon': Icons.mic_external_on_rounded};
     } else if (lowerLabel.contains('animation')) {
-      return {'color': Colors.orangeAccent, 'icon': Icons.celebration_rounded};
+      return {'color': const Color(0xFFE67E22), 'icon': Icons.celebration_rounded};
     } else if (lowerLabel.contains('festival')) {
-      return {'color': Colors.blueAccent, 'icon': Icons.festival_rounded};
+      return {'color': const Color(0xFF1E88E5), 'icon': Icons.festival_rounded};
     } else if (lowerLabel.contains('théâtre') || lowerLabel.contains('theatre') || lowerLabel.contains('culture')) {
-      return {'color': Colors.tealAccent, 'icon': Icons.theater_comedy_rounded};
+      return {'color': const Color(0xFF00897B), 'icon': Icons.theater_comedy_rounded};
     } else if (lowerLabel.contains('polyphonie')) {
-      return {'color': Colors.indigoAccent, 'icon': Icons.record_voice_over_rounded};
+      return {'color': const Color(0xFF5C6BC0), 'icon': Icons.record_voice_over_rounded};
     } else {
       return {'color': const Color(0xFFFF9E00), 'icon': Icons.event_rounded};
     }
@@ -36,6 +36,31 @@ class Event {
   final String segmentLabel;
   final String source;
   final double? distance; // Distance in kilometers from the user
+
+  /// Extracts just the city name from the full address
+  String get cityName {
+    if (locationAddress.isEmpty || locationAddress == 'Corse') return locationAddress;
+    
+    // Try to find city after postal code (e.g. "20000 Ajaccio")
+    final postalMatch = RegExp(r'(\d{5})\s+([A-Za-zÀ-ÿ\-\s]+)').firstMatch(locationAddress);
+    if (postalMatch != null) {
+      return postalMatch.group(2)!.trim().split(',').first.trim();
+    }
+    
+    // Fallback: take the part before the first comma, or the last meaningful segment
+    final parts = locationAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (parts.length >= 2) {
+      // Usually: "Lieu, Ville" or "Lieu, Rue, Ville"
+      // Return the second-to-last part (before "Corse" or "France")
+      for (int i = parts.length - 1; i >= 0; i--) {
+        final p = parts[i].toLowerCase();
+        if (p != 'france' && p != 'corse' && !RegExp(r'^\d{5}').hasMatch(parts[i])) {
+          return parts[i];
+        }
+      }
+    }
+    return parts.first;
+  }
 
   Event({
     required this.id,

@@ -40,7 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _version = "Chargement...";
   UpdateInfo? _updateInfo;
   bool _isCheckingUpdate = false;
-  final InAppReview _inAppReview = InAppReview.instance;
 
   @override
   void initState() {
@@ -97,27 +96,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _requestReview() async {
-    try {
-      if (await _inAppReview.isAvailable()) {
-        await _inAppReview.requestReview();
-      } else {
-        await _inAppReview.openStoreListing(
-            appStoreId: 'com.zeus2a.sortirencorse');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Impossible d\'ouvrir la page d\'avis.',
-                style: GoogleFonts.outfit()),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
 
   Future<void> _launchUpdateUrl() async {
     // Si Android, on tente la mise à jour silencieuse / intégrée

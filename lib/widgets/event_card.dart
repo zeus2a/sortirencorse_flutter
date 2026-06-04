@@ -40,6 +40,11 @@ class _EventCardState extends State<EventCard>
     super.dispose();
   }
 
+  static String _monthAbbr(int month) {
+    const months = ['', 'JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEP', 'OCT', 'NOV', 'DÉC'];
+    return months[month];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -128,10 +133,10 @@ class _EventCardState extends State<EventCard>
                 top: 20,
                 left: 20,
                 child: Container(
-                  width: 60,
-                  height: 60,
+                  width: 58,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.9),
+                    color: const Color(0xFF9D4EDD),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -148,28 +153,29 @@ class _EventCardState extends State<EventCard>
                         widget.event.dateStart.day.toString(),
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        _monthAbbr(widget.event.dateStart.month),
+                        style: GoogleFonts.outfit(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                           height: 1.0,
                         ),
                       ),
                       Text(
-                        '${widget.event.dateStart.month.toString().padLeft(2, '0')}/${widget.event.dateStart.year}',
+                        widget.event.dateStart.year.toString(),
                         style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'à ${widget.event.dateStart.hour}h${widget.event.dateStart.minute.toString().padLeft(2, '0')}',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 9,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
+                          height: 1.0,
                         ),
                       ),
                     ],
@@ -200,13 +206,16 @@ class _EventCardState extends State<EventCard>
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: isFav ? Colors.redAccent.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.4),
+                                  color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: isFav ? Colors.redAccent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1)),
+                                  border: Border.all(
+                                    color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: Icon(
                                   isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                  color: isFav ? Colors.redAccent : Colors.white,
+                                  color: Colors.white,
                                   size: 20,
                                 ),
                               ),
@@ -215,40 +224,6 @@ class _EventCardState extends State<EventCard>
                         );
                       },
                     ),
-                    if (widget.event.distance != null) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.near_me_rounded, color: Colors.cyanAccent, size: 12),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.event.distance! < 1.0
-                                      ? '${(widget.event.distance! * 1000).toInt()} m'
-                                      : '${widget.event.distance!.toStringAsFixed(1)} km',
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),              // Text Content (Bottom)
@@ -279,11 +254,11 @@ class _EventCardState extends State<EventCard>
                     Row(
                       children: [
                         const Icon(Icons.location_on_rounded,
-                            color: Colors.white70, size: 16),
+                            color: Color(0xFFFF6B6B), size: 16),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            widget.event.locationAddress,
+                            widget.event.cityName,
                             style: GoogleFonts.outfit(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14,

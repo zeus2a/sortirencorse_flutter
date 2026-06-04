@@ -576,6 +576,9 @@ class _ContactSheetState extends State<_ContactSheet>
         filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
           height: MediaQuery.of(context).size.height * 0.65,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
           decoration: BoxDecoration(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.9)
@@ -587,7 +590,10 @@ class _ContactSheetState extends State<_ContactSheet>
                   : Colors.black.withValues(alpha: 0.05),
             ),
           ),
-          child: Column(
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: Column(
             children: [
               const SizedBox(height: 12),
               Center(
@@ -710,6 +716,7 @@ class _ContactSheetState extends State<_ContactSheet>
               ),
               SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
             ],
+          ),
           ),
         ),
       ),

@@ -342,16 +342,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
+    if (hour >= 6 && hour < 19) return 'Bonjour,';
+    return 'Bonsoir,';
   }
 
   String _getSubGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Une belle journée s\'annonce.';
-    if (hour < 18) return 'Envie de sortir ?';
-    return 'Prêt pour ce soir ?';
+    if (hour >= 6 && hour < 19) return 'Une belle journée s\'annonce !';
+    return 'Une belle soirée s\'annonce !';
   }
 
   String _getFormattedDate() {
@@ -380,13 +378,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (start.year == end.year &&
           start.month == end.month &&
           start.day == end.day) {
-        return '📅 $startStr (Filtre)';
+        return '$startStr (Filtre)';
       }
       if (start.year == end.year) {
         final shortStartStr = '${start.day} ${months[start.month - 1]}';
-        return '📅 Du $shortStartStr au $endStr';
+        return 'Du $shortStartStr au $endStr';
       }
-      return '📅 Du $startStr au $endStr';
+      return 'Du $startStr au $endStr';
     }
 
     final now = DateTime.now();
@@ -402,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final dayName = days[now.weekday - 1];
     final monthName = months[now.month - 1];
 
-    return '📅 $dayName ${now.day} $monthName ${now.year}';
+    return '$dayName ${now.day} $monthName ${now.year}';
   }
 
   void _showCalendarPicker() {
@@ -714,7 +712,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             parent: BouncingScrollPhysics()),
         slivers: [
           SliverAppBar(
-            expandedHeight: 220.0,
+            expandedHeight: 235.0,
             floating: true,
             pinned: true,
             automaticallyImplyLeading: false,
@@ -731,17 +729,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   'assets/ajaccio_lasers.png',
                   fit: BoxFit.cover,
                 ),
-                // Gradient Overlay for readability
+                // Gradient Overlay for readability - Plus transparent pour voir l'image
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.4),
-                        isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
+                        isDark ? Colors.black.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.1),
+                        isDark ? const Color(0xFF000000).withValues(alpha: 0.9) : const Color(0xFFF8F9FA).withValues(alpha: 0.9),
                       ],
-                      stops: const [0.0, 1.0],
+                      stops: const [0.6, 1.0],
                     ),
                   ),
                 ),
@@ -775,20 +773,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.08)
-                                            : Colors.black.withValues(alpha: 0.05),
+                                            ? Colors.black.withValues(alpha: 0.6)
+                                            : Colors.white.withValues(alpha: 0.8),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isDark
-                                              ? Colors.white.withValues(alpha: 0.12)
-                                              : Colors.black.withValues(alpha: 0.08),
+                                              ? Colors.white.withValues(alpha: 0.2)
+                                              : Colors.black.withValues(alpha: 0.1),
                                         ),
                                       ),
                                       child: Icon(
                                         Icons.menu_rounded,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black54,
+                                        color: isDark ? Colors.white : Colors.black87,
                                         size: 24,
                                       ),
                                     ),
@@ -811,13 +807,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                           horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.06)
-                                            : Colors.black.withValues(alpha: 0.04),
+                                            ? Colors.black.withValues(alpha: 0.6)
+                                            : Colors.white.withValues(alpha: 0.8),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: isDark
-                                              ? Colors.white.withValues(alpha: 0.1)
-                                              : Colors.black.withValues(alpha: 0.06),
+                                              ? Colors.white.withValues(alpha: 0.2)
+                                              : Colors.black.withValues(alpha: 0.1),
                                         ),
                                       ),
                                       child: Container(
@@ -833,17 +829,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
+                                            Icon(
+                                              Icons.calendar_month_rounded,
+                                              color: _selectedDateRange != null
+                                                  ? Colors.greenAccent
+                                                  : const Color(0xFF9D4EDD),
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 6),
                                             Text(
                                               _getFormattedDate(),
                                               style: GoogleFonts.outfit(
-                                                color: _selectedDateRange !=
-                                                        null
+                                                color: _selectedDateRange != null
                                                     ? Colors.greenAccent
-                                                    : (isDark
-                                                        ? Colors.white
-                                                            .withValues(alpha: 0.8)
-                                                        : Colors.black
-                                                            .withValues(alpha: 0.7)),
+                                                    : (isDark ? Colors.white : Colors.black87),
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w700,
                                               ),
@@ -907,13 +906,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       height: 40,
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.08)
-                                            : Colors.black.withValues(alpha: 0.05),
+                                            ? Colors.black.withValues(alpha: 0.6)
+                                            : Colors.white.withValues(alpha: 0.8),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isDark
-                                              ? Colors.white.withValues(alpha: 0.12)
-                                              : Colors.black.withValues(alpha: 0.08),
+                                              ? Colors.white.withValues(alpha: 0.2)
+                                              : Colors.black.withValues(alpha: 0.1),
                                         ),
                                       ),
                                       child: Badge(
@@ -921,9 +920,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         backgroundColor: Colors.redAccent,
                                         child: Icon(
                                           Icons.settings_rounded,
-                                          color: isDark
-                                              ? Colors.white70
-                                              : Colors.black54,
+                                          color: isDark ? Colors.white : Colors.black87,
                                           size: 20,
                                         ),
                                       ),
@@ -957,97 +954,115 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                           const SizedBox(height: 4),
 
-                          // Row 3: Sub-greeting + GPS pill + event counter
+                          // Row 3: Sub-greeting
                           FadeTransition(
                             opacity: _greetingFade,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Row(
-                                children: [
-                                  Text(
-                                    _getSubGreeting(),
-                                    style: GoogleFonts.outfit(
-                                      color: isDark
-                                          ? Colors.white54
-                                          : Colors.black45,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
+                            child: Text(
+                              _getSubGreeting(),
+                              style: GoogleFonts.outfit(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.9)
+                                    : Colors.black.withValues(alpha: 0.8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 12),
+
+                          // Row 4: GPS pill + event counter
+                          FadeTransition(
+                            opacity: _greetingFade,
+                            child: Row(
+                              children: [
+                                // GPS pill (compact)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isGpsActive
+                                        ? Colors.greenAccent.withValues(alpha: 0.25)
+                                        : Colors.redAccent.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  const SizedBox(width: 10),
-                                  // GPS pill (compact)
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isGpsActive
+                                            ? Icons.my_location_rounded
+                                            : Icons.location_off_rounded,
+                                        color: isGpsActive
+                                            ? Colors.greenAccent
+                                            : Colors.redAccent,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isGpsActive
+                                            ? 'GPS actif'
+                                            : 'GPS désactivé',
+                                        style: GoogleFonts.outfit(
+                                          color: isGpsActive
+                                              ? Colors.greenAccent
+                                              : Colors.redAccent,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Event counter
+                                if (!_isLoading && _allEvents.isNotEmpty)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                        horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: isGpsActive
-                                          ? Colors.greenAccent.withValues(alpha: 0.15)
-                                          : Colors.redAccent.withValues(alpha: 0.15),
+                                      color:
+                                          Colors.cyanAccent.withValues(alpha: 0.25),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          isGpsActive
-                                              ? Icons.my_location_rounded
-                                              : Icons.location_off_rounded,
-                                          color: isGpsActive
-                                              ? Colors.greenAccent
-                                              : Colors.redAccent,
-                                          size: 10,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          isGpsActive
-                                              ? 'GPS actif'
-                                              : 'GPS désactivé',
-                                          style: GoogleFonts.outfit(
-                                            color: isGpsActive
-                                                ? Colors.greenAccent
-                                                : Colors.redAccent,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
+                                        const Icon(
+                                            Icons.event_available_rounded,
+                                            color: Colors.cyanAccent,
+                                            size: 14),
+                                        const SizedBox(width: 4),
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: '${_allEvents.length} ',
+                                                style: GoogleFonts.outfit(
+                                                  color: Colors.cyanAccent,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: 'événements à découvrir',
+                                                style: GoogleFonts.outfit(
+                                                  color: Colors.cyanAccent,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  // Event counter
-                                  if (!_isLoading && _allEvents.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.orangeAccent.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                              Icons.local_fire_department_rounded,
-                                              color: Colors.orangeAccent,
-                                              size: 10),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            '${_allEvents.length} disponibles',
-                                            style: GoogleFonts.outfit(
-                                                color: Colors.orangeAccent,
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
+                              ],
                             ),
                           ),
 
+                          const SizedBox(height: 4),
                           const Spacer(),
 
                           // Search Bar
@@ -1129,16 +1144,36 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 const EdgeInsets.only(top: 30, bottom: 10, left: 24, right: 24),
             child: Column(
               children: [
-                Text(
-                  "Chargement des API en cours...",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    color: Colors.orangeAccent.withValues(alpha: 0.9),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 20),
+                // Glowing Animated Cloud Icon
+                AnimatedBuilder(
+                  animation: _navGlowController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: 0.9 + (_navGlowController.value * 0.2), // pulses from 0.9 to 1.1
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF9E00)
+                                  .withValues(alpha: 0.2 + (_navGlowController.value * 0.4)),
+                              blurRadius: 20 + (_navGlowController.value * 20),
+                              spreadRadius: 5 + (_navGlowController.value * 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.cloud_sync_rounded,
+                            size: 35, color: Color(0xFFFF9E00)),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
+                // Progress Bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: const LinearProgressIndicator(
@@ -1147,18 +1182,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  "Mise à jour des bases de données de centaines d'événements...",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    color: isDark ? Colors.white54 : Colors.black45,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    fontStyle: FontStyle.italic,
-                    height: 1.4,
-                  ),
-                ),
+                const SizedBox(height: 24),
+                // Texts
+                Text('Connexion aux API...',
+                    style: GoogleFonts.outfit(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('Synchronisation des bases de données\nMise à jour de centaines d\'événements...',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontSize: 14)),
               ],
             ),
           ),

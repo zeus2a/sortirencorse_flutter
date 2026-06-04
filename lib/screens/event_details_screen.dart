@@ -173,30 +173,25 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
         slivers: [
           // Image avec Hero animation et bouton retour glassmorphism
           SliverAppBar(
-            expandedHeight: 420.0,
+            expandedHeight: MediaQuery.of(context).size.height * 0.45, // Taille standard équilibrée
             pinned: true,
             backgroundColor: bgColor,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white, size: 18),
-                      onPressed: () {
-                        // HapticFeedback removed for speed
-                        Navigator.pop(context);
-                      },
-                    ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1),
                   ),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back_ios_new_rounded,
+                      color: isDark ? Colors.white : Colors.black87, size: 18),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
               ),
             ),
@@ -206,12 +201,25 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                 children: [
                   Hero(
                     tag: 'event-image-${widget.event.id}',
+                    flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
+                      return AnimatedBuilder(
+                        animation: animation,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: flightDirection == HeroFlightDirection.push
+                                ? animation.value
+                                : 1.0 - animation.value * 0.3,
+                            child: toHeroContext.widget,
+                          );
+                        },
+                      );
+                    },
                     child: CachedNetworkImage(
                       imageUrl: widget.event.imageUrl,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  // Premium gradient overlay
+                  // Premium gradient overlay - Much more transparent for V5 visibility
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -220,11 +228,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                         colors: [
                           Colors.transparent,
                           Colors.transparent,
-                          bgColor.withValues(alpha: 0.3),
-                          bgColor.withValues(alpha: 0.8),
+                          bgColor.withValues(alpha: 0.4),
                           bgColor,
                         ],
-                        stops: const [0.0, 0.4, 0.6, 0.8, 1.0],
+                        stops: const [0.0, 0.65, 0.85, 1.0],
                       ),
                     ),
                   ),
@@ -250,21 +257,33 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
+                                  horizontal: 14, vertical: 6),
                               decoration: BoxDecoration(
-                                color: widget.event.segment == 'party'
-                                    ? Colors.purple
-                                    : Colors.amber,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                widget.event.segmentLabel.toUpperCase(),
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.0,
+                                color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.4),
                                 ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Event.getCategoryStyle(widget.event.segmentLabel)['icon'] as IconData,
+                                    color: Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    widget.event.segmentLabel.toUpperCase(),
+                                    style: GoogleFonts.outfit(
+                                      color: Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -291,34 +310,143 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                               color: isDark
                                   ? Colors.white
                                   : const Color(0xFF1A1A2E),
-                              fontSize: 32,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              height: 1.1,
+                              height: 1.2,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // Info Cards glassmorphism
                       FadeTransition(
                         opacity: _infoFade,
-                        child: Column(
-                          children: [
-                            _buildInfoCard(
-                              icon: Icons.calendar_today_rounded,
-                              text: '${widget.event.dateFormatted} ${widget.event.dateStart.year} à ${widget.event.dateStart.hour}h${widget.event.dateStart.minute.toString().padLeft(2, '0')}',
-                              color: Colors.blueAccent,
-                              isDark: isDark,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.black.withValues(alpha: 0.06),
                             ),
-                            const SizedBox(height: 12),
-                            _buildInfoCard(
-                              icon: Icons.location_on_rounded,
-                              text: widget.event.locationAddress,
-                              color: Colors.redAccent,
-                              isDark: isDark,
-                            ),
-                          ],
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Date row
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blueAccent.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.calendar_today_rounded, color: Colors.blueAccent, size: 20),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        '${widget.event.dateFormatted} ${widget.event.dateStart.year} à ${widget.event.dateStart.hour}h${widget.event.dateStart.minute.toString().padLeft(2, '0')}',
+                                        style: GoogleFonts.outfit(
+                                          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Divider
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.06)
+                                    : Colors.black.withValues(alpha: 0.06),
+                                indent: 50,
+                                endIndent: 16,
+                              ),
+                              // Address row
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFF6B6B).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.location_on_rounded, color: Color(0xFFFF6B6B), size: 20),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        widget.event.locationAddress,
+                                        style: GoogleFonts.outfit(
+                                          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (widget.event.distance != null) ...[
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.06),
+                                  indent: 50,
+                                  endIndent: 16,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF9D4EDD).withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(Icons.near_me_rounded, color: Color(0xFF9D4EDD), size: 20),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Text(
+                                          widget.event.distance! < 1.0 
+                                              ? 'À ${(widget.event.distance! * 1000).toInt()} mètres de vous' 
+                                              : 'À ${widget.event.distance!.toStringAsFixed(1)} km de vous',
+                                          style: GoogleFonts.outfit(
+                                            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
 
@@ -461,63 +589,5 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
       ),
     );
   }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String text,
-    required Color color,
-    required bool isDark,
-    bool hasArrow = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.black.withValues(alpha: 0.06),
-        ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.outfit(
-                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          if (hasArrow)
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: isDark ? Colors.white24 : Colors.black26,
-              size: 14,
-            ),
-        ],
-      ),
-    );
-  }
 }
+
