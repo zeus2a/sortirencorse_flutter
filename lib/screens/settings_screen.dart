@@ -530,17 +530,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             _buildDivider(isDark),
             _buildSettingTile(
-              icon: Icons.star_rounded,
-              iconColor: Colors.amberAccent,
-              title: 'Noter l\'application',
-              subtitle: 'Laissez-nous un avis 5 étoiles ⭐',
-              onTap: _requestReview,
-            ),
-            _buildDivider(isDark),
-            _buildSettingTile(
               icon: Icons.shield_rounded,
               iconColor: Colors.greenAccent,
-              title: 'Confidentialité et CGU',
+              title: 'Mentions Légales et CGU',
               subtitle: 'Gérer vos données et conditions',
               onTap: () async {
                 final Uri url =

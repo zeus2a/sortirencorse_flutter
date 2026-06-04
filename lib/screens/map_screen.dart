@@ -35,6 +35,7 @@ class _MapScreenState extends State<MapScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tous';
   DateTimeRange? _selectedDateRange;
+  int _temporalFilterDays = 60; // 30 = Ce mois, 60 = 2 mois, -1 = Toute la saison
 
   // Corse center
   static const _corseCenter = LatLng(42.15, 9.10);
@@ -116,14 +117,15 @@ class _MapScreenState extends State<MapScreen> {
         if (event.dateStart.isBefore(start) || event.dateStart.isAfter(end)) {
           return false;
         }
-      } else {
-        // Default J to J+60 filtering
+      } else if (_temporalFilterDays > 0) {
+        // Dynamic temporal filter
         final start = DateTime.now().subtract(const Duration(days: 1));
-        final end = DateTime.now().add(const Duration(days: 60));
+        final end = DateTime.now().add(Duration(days: _temporalFilterDays));
         if (event.dateStart.isBefore(start) || event.dateStart.isAfter(end)) {
           return false;
         }
       }
+      // _temporalFilterDays == -1 means no date filter (toute la saison)
 
       return true;
     }).toList();
@@ -301,6 +303,51 @@ class _MapScreenState extends State<MapScreen> {
           );
         });
       },
+    );
+  }
+
+  Widget _buildTemporalChip(String label, int days, bool isDark) {
+    final isSelected = _temporalFilterDays == days;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _temporalFilterDays = days;
+        _selectedEvents = [];
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFFF9E00).withValues(alpha: 0.2)
+              : (isDark ? Colors.grey.shade900.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFFF9E00)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3)),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              days == -1 ? Icons.all_inclusive_rounded : Icons.schedule_rounded,
+              color: isSelected ? const Color(0xFFFF9E00) : (isDark ? Colors.white54 : Colors.black45),
+              size: 14,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                color: isSelected ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black54),
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -690,6 +737,22 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     );
                   },
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Temporal Filter Chips
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildTemporalChip('Ce mois', 30, isDark),
+                    const SizedBox(width: 8),
+                    _buildTemporalChip('2 mois', 60, isDark),
+                    const SizedBox(width: 8),
+                    _buildTemporalChip('Toute la saison', -1, isDark),
+                  ],
                 ),
               ),
             ],

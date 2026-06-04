@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -577,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // Bottom Navigation Bar Glassmorphism
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 20,
+            bottom: MediaQuery.of(context).padding.bottom + (Platform.isIOS ? 8 : 20),
             left: 24,
             right: 24,
             child: ClipRRect(
@@ -634,7 +635,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutExpo,
             bottom: _showLocationToast && _currentIndex == 0
-                ? MediaQuery.of(context).padding.bottom + 110
+                ? MediaQuery.of(context).padding.bottom + (Platform.isIOS ? 98 : 110)
                 : -100,
             left: 24,
             right: 24,
@@ -657,10 +658,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(width: 16),
                       Expanded(
                         child: Text(
-                          "Activez la localisation pour voir les événements juste à côté de vous.",
+                          "Activer le GPS pour géolocaliser les événements autour de vous ?",
                           style: GoogleFonts.outfit(
                               color: Colors.white, fontSize: 13),
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _showLocationToast = false;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text("Non",
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(width: 8),
                       TextButton(
@@ -670,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text("Activer",
+                        child: Text("Oui",
                             style: GoogleFonts.outfit(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
