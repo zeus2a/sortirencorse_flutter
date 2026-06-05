@@ -47,9 +47,7 @@ workflows:
           flutter analyze
       - name: Build AAB for Play Store
         script: |
-          flutter build appbundle --release \
-            --build-name=5.5.0 \
-            --build-number=$BUILD_NUMBER
+          flutter build appbundle --release
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab
     publishing:
