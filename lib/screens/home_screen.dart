@@ -735,7 +735,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             parent: BouncingScrollPhysics()),
         slivers: [
           SliverAppBar(
-            expandedHeight: 255.0,
+            expandedHeight: 275.0,
             floating: true,
             pinned: true,
             automaticallyImplyLeading: false,
@@ -1041,7 +1041,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
                                       color:
-                                          const Color(0xFF9D4EDD).withValues(alpha: 0.4),
+                                          const Color(0xFF9D4EDD).withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
@@ -1081,15 +1081,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 32),
 
                           // Search Bar
                           SlideTransition(
                             position: _searchSlide,
                             child: FadeTransition(
                               opacity: _searchFade,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
                                 child: BackdropFilter(
                                   filter:
                                       ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -1129,11 +1131,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         border: InputBorder.none,
                                         contentPadding:
                                             const EdgeInsets.symmetric(
-                                                vertical: 16),
+                                                vertical: 10),
                                       ),
                                     ),
                                   ),
                                 ),
+                              ),
                               ),
                             ),
                           ),

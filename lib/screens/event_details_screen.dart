@@ -423,10 +423,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                                       Container(
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF9D4EDD).withValues(alpha: 0.12),
+                                          color: Colors.blueAccent.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(Icons.near_me_rounded, color: Color(0xFF9D4EDD), size: 20),
+                                        child: const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 20),
                                       ),
                                       const SizedBox(width: 14),
                                       Expanded(
