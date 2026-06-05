@@ -358,7 +358,7 @@ class _NetworkScreenState extends State<NetworkScreen>
             math.min(250.0, MediaQuery.of(context).size.height * 0.3);
 
         return DraggableScrollableSheet(
-          initialChildSize: 0.8,
+          initialChildSize: 0.95,
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (context, scrollController) {

@@ -35,7 +35,7 @@ class _MapScreenState extends State<MapScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tous';
   DateTimeRange? _selectedDateRange;
-  int _temporalFilterDays = 60; // 30 = Ce mois, 60 = 2 mois, -1 = Toute la saison
+  int _temporalFilterDays = -1; // 30 = Ce mois, 60 = 2 mois, -1 = Toute la saison
 
   // Corse center
   static const _corseCenter = LatLng(42.15, 9.10);
@@ -738,16 +738,23 @@ class _MapScreenState extends State<MapScreen> {
               // 2. Ligne de Filtres (Chips)
               SizedBox(
                 height: 48,
-                child: Row(
-                  children: [
-                    // Chip Temporal Actif
-                    Expanded(child: _buildUnifiedTemporalChip(isDark)),
-                    const SizedBox(width: 8),
-                    Container(width: 1, height: 20, color: Colors.grey.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(vertical: 8)),
-                    const SizedBox(width: 8),
-                    // Categories Unified Chip
-                    Expanded(child: _buildUnifiedCategoryChip(isDark)),
-                  ],
+                child: Center(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Chip Temporal Actif
+                        _buildUnifiedTemporalChip(isDark),
+                        const SizedBox(width: 8),
+                        Container(width: 1, height: 20, color: Colors.grey.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(vertical: 8)),
+                        const SizedBox(width: 8),
+                        // Categories Unified Chip
+                        _buildUnifiedCategoryChip(isDark),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -757,7 +764,7 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU BOUTON GPS (Bas Centre, au-dessus du compteur) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 240, // Plus haut pour s'éloigner du compteur
+            bottom: 160, // Ajusté pour un "léger espace" avec le compteur
             left: 0,
             right: 0,
             child: Center(
@@ -786,7 +793,9 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU COMPTEUR D'EVENEMENTS (Bas Centre) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 180, // Remonté à 180 pour s'éloigner du menu du bas
+            bottom: 110, // Juste au-dessus du menu bottom
+            left: 0, // IMPORTANT: Ajouté pour que le Center fonctionne !
+            right: 0, // IMPORTANT: Ajouté pour que le Center fonctionne !
             child: IgnorePointer(
               child: Center(
                 child: Container(
