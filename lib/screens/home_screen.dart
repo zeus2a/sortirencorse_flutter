@@ -682,16 +682,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     bool isGpsActive = _userPosition != null && SettingsScreen.isGpsEnabled;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      extendBody: true,
-      backgroundColor:
-          isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
-      drawer: const AppDrawer(),
-      body: Stack(
-        children: [
-          
-
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor:
+            isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
+        systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        extendBody: true,
+        backgroundColor:
+            isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
+        drawer: const AppDrawer(),
+        body: Stack(
+          children: [
           // Main Content with IndexedStack
           IndexedStack(
             index: _currentIndex,
@@ -705,7 +714,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // Bottom Navigation Bar Glassmorphism
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 12,
+            bottom: MediaQuery.of(context).viewPadding.bottom + 16,
             left: 24,
             right: 24,
             child: ClipRRect(
@@ -757,13 +766,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // Smart Location Toast (Mode 2026 UX)
+          // Smart Location Toast
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutExpo,
             bottom: _showLocationToast && _currentIndex == 0
-                ? MediaQuery.of(context).padding.bottom + 102
-                : -100,
+                ? MediaQuery.of(context).viewPadding.bottom + 102
+                : -160,
             left: 24,
             right: 24,
             child: ClipRRect(
@@ -775,51 +784,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: Colors.blueAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: Colors.blueAccent.withValues(alpha: 0.3)),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.location_on_rounded,
-                          color: Colors.blueAccent, size: 32),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          "L'application peut afficher les événements près de chez vous.",
-                          style: GoogleFonts.outfit(
-                              color: Colors.white, fontSize: 13),
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded,
+                              color: Colors.blueAccent, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "L'application peut afficher les événements près de chez vous.",
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white, fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _showLocationToast = false;
-                          });
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text("Plus tard",
-                            style: GoogleFonts.outfit(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _showLocationToast = false;
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.1),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text("Plus tard",
+                                style: GoogleFonts.outfit(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: _requestLocationPermission,
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text("Continuer",
+                                style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: _requestLocationPermission,
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text("Continuer",
-                            style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
-                      )
                     ],
                   ),
                 ),
@@ -827,6 +848,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
         ],
+      ),
       ),
     );
   }

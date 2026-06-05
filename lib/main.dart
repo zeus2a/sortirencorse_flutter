@@ -13,6 +13,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FavoriteService.init();
 
+  // Verrouiller l'app en portrait uniquement (pas de mode paysage)
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   // Rendre la barre de status et navigation transparentes
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
@@ -20,6 +26,10 @@ void main() async {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+      // Empêche Samsung/Android de forcer un fond de contraste bleuté
+      systemNavigationBarContrastEnforced: false,
     ),
   );
 
