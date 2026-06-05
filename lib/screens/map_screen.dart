@@ -308,10 +308,35 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  void _cycleCategoryFilter() {
+    setState(() {
+      int currentIndex = _categories.indexOf(_selectedCategory);
+      if (currentIndex == -1 || currentIndex == _categories.length - 1) {
+        _selectedCategory = _categories[0]; // 'Tous'
+      } else {
+        _selectedCategory = _categories[currentIndex + 1];
+      }
+      _selectedEvents = [];
+    });
+  }
+
   Widget _buildUnifiedTemporalChip(bool isDark) {
     String label = 'Toute la saison';
+    String? subLabel;
+    bool isLocked = false;
+    
     if (_selectedDateRange != null) {
       label = 'Dates précises';
+      isLocked = true;
+      final start = _selectedDateRange!.start;
+      final end = _selectedDateRange!.end;
+      final startStr = '${start.day.toString().padLeft(2, '0')}/${start.month.toString().padLeft(2, '0')}/${start.year}';
+      final endStr = '${end.day.toString().padLeft(2, '0')}/${end.month.toString().padLeft(2, '0')}/${end.year}';
+      if (start.year == end.year && start.month == end.month && start.day == end.day) {
+        subLabel = startStr;
+      } else {
+        subLabel = 'Du $startStr au $endStr';
+      }
     } else if (_temporalFilterDays == 30) {
       label = 'Ce mois';
     } else if (_temporalFilterDays == 60) {
@@ -321,14 +346,14 @@ class _MapScreenState extends State<MapScreen> {
     final isActive = _selectedDateRange != null || _temporalFilterDays != -1;
 
     return GestureDetector(
-      onTap: _cycleTemporalFilter,
+      onTap: isLocked ? null : _cycleTemporalFilter,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: isActive 
-              ? const Color(0xFFFF9E00).withValues(alpha: 0.15)
-              : (isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white),
-          borderRadius: BorderRadius.circular(20),
+              ? (isDark ? Colors.black.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.8))
+              : (isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.9)),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
               color: isActive 
                   ? const Color(0xFFFF9E00)
@@ -341,9 +366,70 @@ class _MapScreenState extends State<MapScreen> {
             Icon(isActive ? Icons.event_available_rounded : Icons.calendar_today_rounded, 
                  color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87), 
                  size: 14),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                if (subLabel != null)
+                  Text(
+                    subLabel,
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFFFF9E00).withValues(alpha: 0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnifiedCategoryChip(bool isDark) {
+    final isActive = _selectedCategory != 'Tous';
+    
+    return GestureDetector(
+      onTap: _cycleCategoryFilter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isActive 
+              ? (isDark ? Colors.black.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.8))
+              : (isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.9)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: isActive 
+                  ? const Color(0xFFFF9E00)
+                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2))),
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isActive) ...[
+              Icon(
+                Event.getCategoryStyle(_selectedCategory)['icon'],
+                color: const Color(0xFFFF9E00),
+                size: 14,
+              ),
+              const SizedBox(width: 6),
+            ] else ...[
+               Icon(Icons.category_rounded, color: isDark ? Colors.white70 : Colors.black87, size: 14),
+               const SizedBox(width: 6),
+            ],
             Text(
-              label,
+              isActive ? _selectedCategory : 'Tous les genres',
               style: GoogleFonts.outfit(
                 color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
                 fontSize: 13,
@@ -569,63 +655,64 @@ class _MapScreenState extends State<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // 1. Barre de Recherche Flottante
-              Container(
-                height: 54,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withValues(alpha: 0.75) : Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey.shade900 : Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 16),
-                        const Icon(Icons.search_rounded, color: Colors.grey, size: 22),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            style: GoogleFonts.outfit(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Rechercher un lieu, un artiste...',
-                              hintStyle: GoogleFonts.outfit(
-                                color: isDark ? Colors.white54 : Colors.grey.shade500,
-                                fontSize: 15,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 16),
+                          const Icon(Icons.search_rounded, color: Colors.grey, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.outfit(
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                               ),
-                              border: InputBorder.none,
+                              decoration: InputDecoration(
+                                hintText: 'Rechercher (ex: L\'Alba)...',
+                                hintStyle: GoogleFonts.outfit(
+                                  color: isDark ? Colors.white54 : Colors.grey.shade500,
+                                  fontSize: 15,
+                                ),
+                                border: InputBorder.none,
+                              ),
                             ),
                           ),
-                        ),
-                        Container(width: 1, height: 24, color: Colors.grey.withValues(alpha: 0.3)),
-                        InkWell(
-                          onTap: _showCalendarPicker,
-                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Icon(
-                              Icons.calendar_month_rounded,
-                              color: _selectedDateRange != null ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.grey.shade700),
-                              size: 22,
+                          Container(width: 1, height: 24, color: Colors.grey.withValues(alpha: 0.3)),
+                          InkWell(
+                            onTap: _showCalendarPicker,
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              child: Icon(
+                                Icons.calendar_month_rounded,
+                                color: _selectedDateRange != null ? Colors.redAccent : const Color(0xFFFF9E00),
+                                size: 24,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -633,7 +720,7 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 12),
               // 2. Ligne de Filtres (Chips)
               SizedBox(
-                height: 36,
+                height: 48,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
@@ -643,62 +730,8 @@ class _MapScreenState extends State<MapScreen> {
                     const SizedBox(width: 8),
                     Container(width: 1, height: 20, color: Colors.grey.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(vertical: 8)),
                     const SizedBox(width: 8),
-                    // Categories
-                    ..._categories.map((cat) {
-                      final isCatSelected = _selectedCategory == cat;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedCategory = cat;
-                            _selectedEvents = [];
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: isCatSelected 
-                                  ? const Color(0xFF1A1A2E) 
-                                  : (isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white),
-                              borderRadius: BorderRadius.circular(20),
-                              border: isCatSelected 
-                                  ? null 
-                                  : Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2)),
-                              boxShadow: isCatSelected ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                )
-                              ] : [],
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (cat != 'Tous') ...[
-                                  Icon(
-                                    Event.getCategoryStyle(cat)['icon'],
-                                    color: isCatSelected ? Colors.white : Event.getCategoryStyle(cat)['color'],
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
-                                Text(
-                                  cat,
-                                  style: GoogleFonts.outfit(
-                                    color: isCatSelected 
-                                        ? Colors.white 
-                                        : (isDark ? Colors.white70 : Colors.black87),
-                                    fontSize: 13,
-                                    fontWeight: isCatSelected ? FontWeight.w700 : FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                    // Categories Unified Chip
+                    _buildUnifiedCategoryChip(isDark),
                   ],
                 ),
               ),
@@ -706,71 +739,76 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
 
-        // --- NOUVEAU BOUTON GPS (Bas droite) ---
-        Positioned(
-          bottom: _selectedEvents.isNotEmpty ? 440 : 30, // Remonte si la carte modale est affichée
-          right: 16,
-          child: FloatingActionButton(
-            heroTag: 'map_gps_fab',
-            mini: true,
-            backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
-            elevation: 4,
-            onPressed: () {
-              _mapController.move(
-                _userPosition != null && SettingsScreen.isGpsEnabled
-                    ? LatLng(_userPosition!.latitude, _userPosition!.longitude)
-                    : _corseCenter,
-                _userPosition != null && SettingsScreen.isGpsEnabled ? 11.0 : _defaultZoom,
-              );
-              setState(() => _selectedEvents = []);
-            },
-            child: Icon(
-              Icons.my_location_rounded,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-        ),
-
-        // --- NOUVEAU COMPTEUR D'EVENEMENTS (Bas Centre) ---
-        Positioned(
-          bottom: _selectedEvents.isNotEmpty ? 440 : 30,
-          left: 0,
-          right: 0,
-          child: IgnorePointer(
+        // --- NOUVEAU BOUTON GPS (Bas Centre, au-dessus du compteur) ---
+        if (_selectedEvents.isEmpty)
+          Positioned(
+            bottom: 220, // Centré au-dessus du compteur
+            left: 0,
+            right: 0,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.map_rounded, color: Color(0xFFFF9E00), size: 14),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${filteredEvents.length} événements',
-                      style: GoogleFonts.outfit(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              child: FloatingActionButton(
+                heroTag: 'map_gps_fab',
+                mini: true,
+                backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
+                elevation: 4,
+                onPressed: () {
+                  _mapController.move(
+                    _userPosition != null && SettingsScreen.isGpsEnabled
+                        ? LatLng(_userPosition!.latitude, _userPosition!.longitude)
+                        : _corseCenter,
+                    _userPosition != null && SettingsScreen.isGpsEnabled ? 11.0 : _defaultZoom,
+                  );
+                  setState(() => _selectedEvents = []);
+                },
+                child: Icon(
+                  Icons.my_location_rounded,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
             ),
           ),
-        ),
+
+        // --- NOUVEAU COMPTEUR D'EVENEMENTS (Bas Centre) ---
+        if (_selectedEvents.isEmpty)
+          Positioned(
+            bottom: 160,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.map_rounded, color: Color(0xFFFF9E00), size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${filteredEvents.length} événements',
+                        style: GoogleFonts.outfit(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         if (_selectedEvents.isNotEmpty)
           Align(
