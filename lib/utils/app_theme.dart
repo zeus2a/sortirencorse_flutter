@@ -20,6 +20,9 @@ class AppColors {
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightCard = Color(0xFFFFFFFF);
 
+  // ── Text ──
+  static const Color darkText = Color(0xFF1A1A2E);
+
   // ── Glass ──
   static Color glassWhite(double opacity) => Colors.white.withValues(alpha: opacity);
   static Color glassBlack(double opacity) => Colors.black.withValues(alpha: opacity);
@@ -28,16 +31,6 @@ class AppColors {
   static const Color success = Color(0xFF22C55E);
   static const Color error = Color(0xFFEF4444);
   static const Color warning = Color(0xFFF59E0B);
-
-  // ── Segment Colors ──
-  static Color segmentColor(String segment) {
-    switch (segment) {
-      case 'party':
-        return Colors.purple.shade600;
-      default:
-        return Colors.amber.shade700;
-    }
-  }
 }
 
 class AppTextStyles {
@@ -105,6 +98,49 @@ class AppTextStyles {
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
+      );
+}
+
+/// Centralized route factory — single source of truth for all page transitions.
+/// Use these instead of creating PageRouteBuilder inline in each screen.
+class AppRoutes {
+  /// Fade transition — used for event detail sheets (home feed, favorites)
+  static Route<T> fade<T>(Widget page, {int ms = 400}) => PageRouteBuilder<T>(
+        transitionDuration: Duration(milliseconds: ms),
+        reverseTransitionDuration: Duration(milliseconds: ms - 50),
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+      );
+
+  /// Slide-up transition — used for map detail sheet
+  static Route<T> slideUp<T>(Widget page, {int ms = 400}) =>
+      PageRouteBuilder<T>(
+        transitionDuration: Duration(milliseconds: ms),
+        reverseTransitionDuration: Duration(milliseconds: ms - 50),
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          child: child,
+        ),
+      );
+
+  /// Slide-right transition — used for settings screen
+  static Route<T> slideRight<T>(Widget page, {int ms = 350}) =>
+      PageRouteBuilder<T>(
+        transitionDuration: Duration(milliseconds: ms),
+        reverseTransitionDuration: Duration(milliseconds: ms - 50),
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+          child: child,
+        ),
       );
 }
 

@@ -4,31 +4,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/favorite_service.dart';
 import '../models/event.dart';
+import '../utils/app_theme.dart';
 import 'event_details_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final List<Event> allEvents;
   const FavoritesScreen({super.key, required this.allEvents});
 
-  static String _monthAbbr(int month) {
-    const months = ['', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    return months[month];
-  }
 
-  void _openEventDetail(BuildContext context, Event event) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 350),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            EventDetailsScreen(event: event),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,13 +69,16 @@ class FavoritesScreen extends StatelessWidget {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(
-                      top: 10, bottom: 120, left: 24, right: 24),
+                  padding: EdgeInsets.only(
+                      top: 10,
+                      bottom: MediaQuery.of(context).padding.bottom + 90,
+                      left: 24,
+                      right: 24),
                   itemCount: favoriteEvents.length,
                   itemBuilder: (context, index) {
                     final event = favoriteEvents[index];
                     return GestureDetector(
-                      onTap: () => _openEventDetail(context, event),
+                      onTap: () => Navigator.push(context, AppRoutes.fade(EventDetailsScreen(event: event))),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
@@ -167,7 +153,7 @@ class FavoritesScreen extends StatelessWidget {
                                               BorderRadius.circular(8),
                                         ),
                                         child: Text(
-                                          '${event.dateStart.day} ${_monthAbbr(event.dateStart.month)} ${event.dateStart.year}',
+                                          '${event.dateStart.day} ${Event.monthAbbr(event.dateStart.month)} ${event.dateStart.year}',
                                           style: GoogleFonts.outfit(
                                             color: Colors.white,
                                             fontSize: 10,
@@ -276,9 +262,7 @@ class FavoritesScreen extends StatelessWidget {
                                             const SizedBox(width: 4),
                                             Expanded(
                                               child: Text(
-                                                event.distance! < 1.0 
-                                                    ? 'À ${(event.distance! * 1000).toInt()} m de vous' 
-                                                    : 'À ${event.distance!.toStringAsFixed(1)} km de vous',
+                                                event.distanceLabelCapital,
                                                 style: GoogleFonts.outfit(
                                                   color: isDark ? Colors.white54 : Colors.black45,
                                                   fontSize: 12,

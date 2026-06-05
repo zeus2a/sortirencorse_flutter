@@ -92,8 +92,8 @@ class _NetworkScreenState extends State<NetworkScreen>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // SafeArea & Header Space
-        const SizedBox(height: 50),
+        // Safe area top + spacing
+        SizedBox(height: MediaQuery.of(context).padding.top + 10),
 
         // Search Bar Glassmorphism
         Padding(

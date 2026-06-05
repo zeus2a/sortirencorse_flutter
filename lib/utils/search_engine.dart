@@ -15,6 +15,18 @@ class SmartSearch {
     return str.trim();
   }
 
+  /// Synchronous single-event match — used by map_screen for inline filtering.
+  /// Searches title + locationAddress + segmentLabel + description
+  /// with the same accent-normalized logic as processEvents().
+  static bool matchesQuery(Event event, String rawQuery) {
+    if (rawQuery.isEmpty) return true;
+    final queryWords = _normalize(rawQuery).split(' ').where((w) => w.isNotEmpty).toList();
+    final searchString = _normalize(
+      '${event.title} ${event.locationAddress} ${event.segmentLabel} ${event.description}',
+    );
+    return queryWords.every((word) => searchString.contains(word));
+  }
+
   static Future<List<Event>> processEvents({
     required List<Event> allEvents,
     required String query,
@@ -24,8 +36,11 @@ class SmartSearch {
     final isSearchEmpty = normalizedQuery.isEmpty;
 
     List<Event> processedList = allEvents.map((event) {
+      // Reuse already-calculated distance from home_screen if available
+      if (event.distance != null) return event;
+
       double? distance;
-      // Calculate distance if user location is known and event has valid coordinates
+      // Calculate distance only if not already set and user location is known
       if (userPosition != null && event.lat != 0.0 && event.lng != 0.0) {
         final distanceInMeters = Geolocator.distanceBetween(
           userPosition.latitude,

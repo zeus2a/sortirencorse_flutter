@@ -570,153 +570,169 @@ class _ContactSheetState extends State<_ContactSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.65,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.9)
-                : Colors.white.withValues(alpha: 0.97),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.05),
-            ),
-          ),
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            behavior: HitTestBehavior.opaque,
-            child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black26,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Nous contacter',
-                style: GoogleFonts.outfit(
-                  color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-              // Tabs
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.9)
+                    : Colors.white.withValues(alpha: 0.97),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  labelStyle: GoogleFonts.outfit(
-                      fontSize: 12, fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: GoogleFonts.outfit(
-                      fontSize: 12, fontWeight: FontWeight.w400),
-                  labelColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                  unselectedLabelColor:
-                      isDark ? Colors.white38 : Colors.black38,
-                  indicator: BoxDecoration(
-                    color: const Color(0xFFFF9E00).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFFFF9E00).withValues(alpha: 0.4)),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  tabs: _tabs,
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
                 ),
               ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black26,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Nous contacter',
+                    style: GoogleFonts.outfit(
+                      color:
+                          isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 20),
-
-              // Message field
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
+                  // Tabs
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.06),
-                      ),
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: TextField(
-                      controller: _messageController,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: GoogleFonts.outfit(
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                        fontSize: 15,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelStyle: GoogleFonts.outfit(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                      unselectedLabelStyle: GoogleFonts.outfit(
+                          fontSize: 12, fontWeight: FontWeight.w400),
+                      labelColor:
+                          isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      unselectedLabelColor:
+                          isDark ? Colors.white38 : Colors.black38,
+                      indicator: BoxDecoration(
+                        color:
+                            const Color(0xFFFF9E00).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: const Color(0xFFFF9E00)
+                                .withValues(alpha: 0.4)),
                       ),
-                      decoration: InputDecoration(
-                        hintText: _hints[_tabController.index],
-                        hintStyle: GoogleFonts.outfit(
-                          color: isDark ? Colors.white24 : Colors.black26,
-                          fontSize: 14,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: Colors.transparent,
+                      tabs: _tabs,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Message field — Expanded to fill available space
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.06),
+                          ),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(16),
+                        child: TextField(
+                          controller: _messageController,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          textInputAction: TextInputAction.newline,
+                          style: GoogleFonts.outfit(
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E),
+                            fontSize: 15,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: _hints[_tabController.index],
+                            hintStyle: GoogleFonts.outfit(
+                              color:
+                                  isDark ? Colors.white24 : Colors.black26,
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(16),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // Send button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _sendEmail,
-                    icon: const Icon(Icons.send_rounded, size: 18),
-                    label: Text(
-                      'Envoyer',
-                      style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF9E00),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
+                  // Send button — Always visible above keyboard
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _sendEmail,
+                        icon: const Icon(Icons.send_rounded, size: 18),
+                        label: Text(
+                          'Envoyer',
+                          style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF9E00),
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  SizedBox(height: bottomPadding + 16),
+                ],
               ),
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-            ],
-          ),
+            ),
           ),
         ),
       ),

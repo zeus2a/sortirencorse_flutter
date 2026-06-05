@@ -21,6 +21,38 @@ class Event {
     }
   }
 
+  /// Formats a month number to its abbreviated French name (e.g. 1 → 'Jan')
+  static String monthAbbr(int month) {
+    const months = ['', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+        'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    if (month < 1 || month > 12) return '';
+    return months[month];
+  }
+
+  /// Returns a formatted distance string (e.g. 'à 350 m de vous' or 'à 1.2 km de vous')
+  String get distanceLabel {
+    if (distance == null) return '';
+    return distance! < 1.0
+        ? 'à ${(distance! * 1000).toInt()} m de vous'
+        : 'à ${distance!.toStringAsFixed(1)} km de vous';
+  }
+
+  /// Same as distanceLabel but with capital À
+  String get distanceLabelCapital {
+    if (distance == null) return '';
+    return distance! < 1.0
+        ? 'À ${(distance! * 1000).toInt()} m de vous'
+        : 'À ${distance!.toStringAsFixed(1)} km de vous';
+  }
+
+  /// Short format for map display (e.g. '350 m' or '1.2 km')
+  String get distanceLabelShort {
+    if (distance == null) return '';
+    return distance! < 1.0
+        ? '${(distance! * 1000).toInt()} m'
+        : '${distance!.toStringAsFixed(1)} km';
+  }
+
   final int id;
   final String title;
   final String slug;

@@ -1,12 +1,14 @@
-import 'dart:io';
+
 import 'dart:ui';
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/event.dart';
 import '../services/api_service.dart';
 import '../widgets/event_card.dart';
@@ -19,6 +21,7 @@ import 'settings_screen.dart';
 import '../services/update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/app_drawer.dart';
+import '../utils/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,6 +42,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String _searchQuery = '';
   DateTimeRange? _selectedDateRange;
   Timer? _debounce;
+
+  // Quick temporal filter: 'all' | 'today' | 'weekend' | 'week'
+  String _quickFilter = 'all';
 
   Position? _userPosition;
   bool _showLocationToast = false;
@@ -344,17 +350,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final start = _selectedDateRange!.start;
       final end = _selectedDateRange!.end.add(const Duration(days: 1));
       results = results.where((e) {
-        return e.dateStart
-                .isAfter(start.subtract(const Duration(seconds: 1))) &&
+        return e.dateStart.isAfter(start.subtract(const Duration(seconds: 1))) &&
             e.dateStart.isBefore(end);
       }).toList();
     } else {
-      final start = DateTime.now().subtract(const Duration(days: 1));
-      final end = DateTime.now().add(const Duration(days: 60));
+      // Apply quick filter or default 60-day window
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      DateTimeRange range;
+
+      switch (_quickFilter) {
+        case 'today':
+          range = DateTimeRange(start: today, end: today.add(const Duration(days: 1)));
+          break;
+        case 'weekend':
+          // Find the next Saturday
+          final daysUntilSat = (DateTime.saturday - now.weekday + 7) % 7;
+          final sat = today.add(Duration(days: daysUntilSat == 0 ? 0 : daysUntilSat));
+          final sun = sat.add(const Duration(days: 1));
+          range = DateTimeRange(start: sat, end: sun.add(const Duration(days: 1)));
+          break;
+        case 'week':
+          range = DateTimeRange(start: today, end: today.add(const Duration(days: 7)));
+          break;
+        default: // 'all'
+          range = DateTimeRange(
+            start: now.subtract(const Duration(days: 1)),
+            end: now.add(const Duration(days: 60)),
+          );
+      }
+
       results = results.where((e) {
-        return e.dateStart
-                .isAfter(start.subtract(const Duration(seconds: 1))) &&
-            e.dateStart.isBefore(end);
+        return e.dateStart.isAfter(range.start.subtract(const Duration(seconds: 1))) &&
+            e.dateStart.isBefore(range.end);
       }).toList();
     }
 
@@ -368,6 +396,89 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (hour >= 6 && hour < 19) return 'Bonjour,';
     return 'Bonsoir,';
   }
+
+  /// Quick chip filter — resets date range and triggers search
+  void _setQuickFilter(String filter) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _quickFilter = filter;
+      _selectedDateRange = null; // Clear precise date range when using quick chips
+    });
+    _runSmartSearch();
+  }
+
+  /// Builds the horizontal quick filter chip row
+  Widget _buildQuickFilterChips(bool isDark) {
+    final chips = [
+      (id: 'all',     label: 'Tous',          icon: Icons.explore_rounded),
+      (id: 'today',   label: 'Aujourd\'hui',  icon: Icons.wb_sunny_rounded),
+      (id: 'weekend', label: 'Ce weekend',    icon: Icons.weekend_rounded),
+      (id: 'week',    label: 'Cette semaine', icon: Icons.date_range_rounded),
+    ];
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 4),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: chips.map((chip) {
+              final isActive = _quickFilter == chip.id;
+              return GestureDetector(
+                onTap: () => _setQuickFilter(chip.id),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? const Color(0xFFFF9E00)
+                        : (isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.06)),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isActive
+                          ? const Color(0xFFFF9E00)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.08)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        chip.icon,
+                        size: 15,
+                        color: isActive
+                            ? Colors.white
+                            : (isDark ? Colors.white60 : Colors.black54),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        chip.label,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                          color: isActive
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
 
   String _getSubGreeting() {
     final hour = DateTime.now().hour;
@@ -579,6 +690,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       key: _scaffoldKey,
+      extendBody: true,
       backgroundColor:
           isDark ? const Color(0xFF000000) : const Color(0xFFF8F9FA),
       drawer: const AppDrawer(),
@@ -599,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // Bottom Navigation Bar Glassmorphism
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + (Platform.isIOS ? 8 : 20),
+            bottom: MediaQuery.of(context).padding.bottom + 12,
             left: 24,
             right: 24,
             child: ClipRRect(
@@ -656,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutExpo,
             bottom: _showLocationToast && _currentIndex == 0
-                ? MediaQuery.of(context).padding.bottom + (Platform.isIOS ? 98 : 110)
+                ? MediaQuery.of(context).padding.bottom + 102
                 : -100,
             left: 24,
             right: 24,
@@ -679,7 +791,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(width: 16),
                       Expanded(
                         child: Text(
-                          "Activer le GPS pour géolocaliser les événements autour de vous ?",
+                          "L'application peut afficher les événements près de chez vous.",
                           style: GoogleFonts.outfit(
                               color: Colors.white, fontSize: 13),
                         ),
@@ -696,7 +808,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text("Non",
+                        child: Text("Plus tard",
                             style: GoogleFonts.outfit(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.bold)),
@@ -709,7 +821,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text("Oui",
+                        child: Text("Continuer",
                             style: GoogleFonts.outfit(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -726,16 +838,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildFeedTab(bool isGpsActive, bool isDark) {
-    return RefreshIndicator(
-      onRefresh: _refreshEvents,
-      color: const Color(0xFFFF9E00),
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics()),
-        slivers: [
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics()),
+      slivers: [
+        // ── Premium Pull-to-Refresh (Cupertino natif + brand orange) ──
+        CupertinoSliverRefreshControl(
+          onRefresh: () async {
+            HapticFeedback.heavyImpact();
+            await _refreshEvents();
+          },
+          builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
+            // Calcul progression pour l'animation
+            final double progress = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
+            final bool isRefreshing = refreshState == RefreshIndicatorMode.refresh;
+
+            return Container(
+              alignment: Alignment.center,
+              child: AnimatedOpacity(
+                opacity: progress.clamp(0.3, 1.0),
+                duration: const Duration(milliseconds: 100),
+                child: isRefreshing
+                    ? const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF9E00)),
+                        ),
+                      )
+                    : Transform.scale(
+                        scale: 0.6 + (progress * 0.4),
+                        child: Icon(
+                          Icons.sync_rounded,
+                          color: const Color(0xFFFF9E00).withValues(alpha: progress),
+                          size: 32,
+                        ),
+                      ),
+              ),
+            );
+          },
+        ),
           SliverAppBar(
-            expandedHeight: 275.0,
+            expandedHeight: 275.0 + MediaQuery.of(context).padding.top * 0.5,
             floating: true,
             pinned: true,
             automaticallyImplyLeading: false,
@@ -898,30 +1043,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       // HapticFeedback removed for speed
                                       Navigator.push(
                                         context,
-                                        PageRouteBuilder(
-                                          transitionDuration:
-                                              const Duration(milliseconds: 350),
-                                          reverseTransitionDuration:
-                                              const Duration(milliseconds: 300),
-                                          pageBuilder: (context, animation,
-                                                  secondaryAnimation) =>
-                                              const SettingsScreen(),
-                                          transitionsBuilder: (context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child) {
-                                            return SlideTransition(
-                                              position: Tween<Offset>(
-                                                begin: const Offset(1.0, 0.0),
-                                                end: Offset.zero,
-                                              ).animate(CurvedAnimation(
-                                                parent: animation,
-                                                curve: Curves.easeOutCubic,
-                                              )),
-                                              child: child,
-                                            );
-                                          },
-                                        ),
+                                        AppRoutes.slideRight(const SettingsScreen()),
                                       ).then((_) => _checkLocationPermission());
                                     },
                                     child: Container(
@@ -1081,7 +1203,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
 
-                          const SizedBox(height: 56),
+                          const SizedBox(height: 20),
 
                           // Search Bar
                           SlideTransition(
@@ -1146,13 +1268,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   },
                 ),
               ),
-              ],
-            ),
-            ),
+            ],
           ),
-          ..._buildSliverBody(isDark),
-        ],
-      ),
+        ),
+        ),  // SliverAppBar
+        ..._buildSliverBody(isDark),
+      ],
     );
   }
 
@@ -1262,6 +1383,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     if (_filteredEvents.isEmpty) {
       return [
+        _buildQuickFilterChips(isDark),
         SliverToBoxAdapter(
             child: _buildEmptyState(isDark, isSearch: _searchQuery.isNotEmpty))
       ];
@@ -1272,7 +1394,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         : _filteredEvents.length;
     final bool showLoadMore = _filteredEvents.length > _displayLimit;
 
+    // Nearby events section (GPS active + at least 1 event within 15km)
+    final nearbyEvents = (_userPosition != null && SettingsScreen.isGpsEnabled)
+        ? _filteredEvents.where((e) => e.distance != null && e.distance! <= 15.0).toList()
+        : <Event>[];
+
     return [
+      _buildQuickFilterChips(isDark),
+      if (nearbyEvents.isNotEmpty) _buildNearbySection(nearbyEvents, isDark),
       SliverPadding(
         padding: const EdgeInsets.only(top: 10),
         sliver: SliverList(
@@ -1281,20 +1410,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               return EventCard(
                 event: _filteredEvents[index],
                 onTap: () {
-                  // HapticFeedback removed for speed
                   Navigator.push(
                     context,
-                    PageRouteBuilder(
-                      transitionDuration: const Duration(milliseconds: 400),
-                      reverseTransitionDuration:
-                          const Duration(milliseconds: 350),
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          EventDetailsScreen(event: _filteredEvents[index]),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                    ),
+                    AppRoutes.fade(EventDetailsScreen(event: _filteredEvents[index])),
                   );
                 },
               );
@@ -1328,7 +1446,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   elevation: 0,
                 ),
                 onPressed: () {
-                  // HapticFeedback removed for speed
+                  HapticFeedback.lightImpact();
                   setState(() {
                     _displayLimit += 50;
                   });
@@ -1353,6 +1471,151 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ];
   }
 
+  /// Horizontal scrollable section showing nearby events (≤ 15km)
+  Widget _buildNearbySection(List<Event> nearby, bool isDark) {
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Près de vous',
+                  style: GoogleFonts.outfit(
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${nearby.length}',
+                    style: GoogleFonts.outfit(
+                      color: Colors.blueAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: nearby.length,
+              itemBuilder: (context, index) {
+                final ev = nearby[index];
+                final style = Event.getCategoryStyle(ev.segmentLabel);
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.push(context, AppRoutes.fade(EventDetailsScreen(event: ev)));
+                  },
+                  child: Container(
+                    width: 220,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: isDark ? const Color(0xFF111111) : Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black38 : Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CachedNetworkImage(
+                            imageUrl: ev.imageUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Container(
+                              color: (style['color'] as Color).withValues(alpha: 0.2),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.75)],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 10,
+                            left: 10,
+                            right: 10,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ev.title,
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 12),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      ev.distanceLabelShort,
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.blueAccent,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNavItem(int index, IconData icon, String label, bool isDark) {
     final isSelected = _currentIndex == index;
     const Color activeColor = Color(0xFFFF9E00); // Brand orange
@@ -1360,7 +1623,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: () {
         if (_currentIndex != index) {
-          // HapticFeedback removed for speed
+          HapticFeedback.selectionClick();
           setState(() => _currentIndex = index);
         }
       },

@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -190,11 +190,43 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                   icon: Icon(Icons.arrow_back_ios_new_rounded,
                       color: isDark ? Colors.white : Colors.black87, size: 18),
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     Navigator.pop(context);
                   },
                 ),
               ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.ios_share_rounded,
+                        color: isDark ? Colors.white : Colors.black87, size: 20),
+                    tooltip: 'Partager',
+                    onPressed: () async {
+                      HapticFeedback.mediumImpact();
+                      final event = widget.event;
+                      final dateStr =
+                          '${event.dateStart.day}/${event.dateStart.month}/${event.dateStart.year}';
+                      await Share.share(
+                        '🎉 ${event.title}\n'
+                        '📍 ${event.locationAddress}\n'
+                        '📅 $dateStr\n\n'
+                        'Découvrez cet événement sur Sortir en Corse !',
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -259,10 +291,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 6),
                               decoration: BoxDecoration(
-                                color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.15),
+                                color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.4),
+                                  color: (Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color).withValues(alpha: 0.5),
+                                  width: 0.5,
                                 ),
                               ),
                               child: Row(
@@ -270,14 +303,14 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                                 children: [
                                   Icon(
                                     Event.getCategoryStyle(widget.event.segmentLabel)['icon'] as IconData,
-                                    color: Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color,
+                                    color: Colors.white,
                                     size: 14,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     widget.event.segmentLabel.toUpperCase(),
                                     style: GoogleFonts.outfit(
-                                      color: Event.getCategoryStyle(widget.event.segmentLabel)['color'] as Color,
+                                      color: Colors.white,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.0,
@@ -431,9 +464,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen>
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Text(
-                                          widget.event.distance! < 1.0 
-                                              ? 'À ${(widget.event.distance! * 1000).toInt()} mètres de vous' 
-                                              : 'À ${widget.event.distance!.toStringAsFixed(1)} km de vous',
+                                          widget.event.distanceLabelCapital,
                                           style: GoogleFonts.outfit(
                                             color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                                             fontSize: 15,

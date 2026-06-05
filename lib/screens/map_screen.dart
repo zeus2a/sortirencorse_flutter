@@ -8,6 +8,8 @@ import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/event.dart';
+import '../utils/app_theme.dart';
+import '../utils/search_engine.dart';
 import 'event_details_screen.dart';
 import 'settings_screen.dart';
 
@@ -37,6 +39,9 @@ class _MapScreenState extends State<MapScreen> {
   DateTimeRange? _selectedDateRange;
   int _temporalFilterDays = -1; // 30 = Ce mois, 60 = 2 mois, -1 = Toute la saison
 
+  // Cached categories — computed once, not on every rebuild
+  List<String> _cachedCategories = ['Tous'];
+
   // Corse center
   static const _corseCenter = LatLng(42.15, 9.10);
   static const _defaultZoom = 8.5;
@@ -52,6 +57,7 @@ class _MapScreenState extends State<MapScreen> {
     if (widget.initialEvents != null) {
       _userPosition = widget.initialPosition;
       _events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
+      _cachedCategories = _buildCategories();
       _isLoading = false;
     } else {
       _isLoading = false;
@@ -73,6 +79,7 @@ class _MapScreenState extends State<MapScreen> {
         setState(() {
           _userPosition = widget.initialPosition;
           _events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
+          _cachedCategories = _buildCategories();
         });
       }
     }
@@ -80,23 +87,21 @@ class _MapScreenState extends State<MapScreen> {
 
   // Events and location are passed from HomeScreen
 
+  // Returns filtered events using the unified SmartSearch engine
+  // so the map searches title + location + segmentLabel + description
+  // with proper accent normalization — same behavior as the home feed.
   List<Event> get _filteredEvents {
-    return _events.where((event) {
-      // 1. Text Search
+    var results = _events.where((event) {
+      // Text search (accent-normalized via SmartSearch helper)
       if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.replaceAll(RegExp(r"['\s\-]"), "");
-        final normalizedTitle = event.title.toLowerCase().replaceAll(RegExp(r"['\s\-]"), "");
-        final normalizedLoc = event.locationAddress.toLowerCase().replaceAll(RegExp(r"['\s\-]"), "");
-        
-        if (!normalizedTitle.contains(query) && !normalizedLoc.contains(query)) return false;
+        final matched = SmartSearch.matchesQuery(event, _searchQuery);
+        if (!matched) return false;
       }
-
-      // 2. Category
+      // Category filter
       if (_selectedCategory != 'Tous' && event.segmentLabel != _selectedCategory) {
         return false;
       }
-
-      // 3. Date Range
+      // Date range filter
       if (_selectedDateRange != null) {
         final start = _selectedDateRange!.start;
         final end = _selectedDateRange!.end.add(const Duration(days: 1));
@@ -104,67 +109,40 @@ class _MapScreenState extends State<MapScreen> {
           return false;
         }
       } else if (_temporalFilterDays > 0) {
-        // Dynamic temporal filter
         final start = DateTime.now().subtract(const Duration(days: 1));
         final end = DateTime.now().add(Duration(days: _temporalFilterDays));
         if (event.dateStart.isBefore(start) || event.dateStart.isAfter(end)) {
           return false;
         }
       }
-      // _temporalFilterDays == -1 means no date filter (toute la saison)
-
       return true;
     }).toList();
+    return results;
   }
 
-  List<String> get _categories {
+  /// Builds and sorts the category list — called once, result cached in _cachedCategories.
+  List<String> _buildCategories() {
     final cats = _events.map((e) => e.segmentLabel).where((e) => e.isNotEmpty).toSet().toList();
-    
     cats.sort((a, b) {
-      final aLower = a.toLowerCase();
-      final bLower = b.toLowerCase();
-      
       int getScore(String cat) {
-        if (cat.contains('polyphonie')) return 1;
-        if (cat.contains('concert')) return 2;
-        if (cat.contains('festival')) return 3;
-        if (cat.contains('soirée') || cat.contains('soiree') || cat.contains('dj')) return 4;
-        if (cat.contains('theatre') || cat.contains('théâtre') || cat.contains('danse')) return 999; // Toujours en dernier
-        return 50; // Autres catégories au milieu
+        final c = cat.toLowerCase();
+        if (c.contains('polyphonie')) return 1;
+        if (c.contains('concert')) return 2;
+        if (c.contains('festival')) return 3;
+        if (c.contains('soirée') || c.contains('soiree') || c.contains('dj')) return 4;
+        if (c.contains('theatre') || c.contains('théâtre') || c.contains('danse')) return 999;
+        return 50;
       }
-
-      int scoreA = getScore(aLower);
-      int scoreB = getScore(bLower);
-
+      final scoreA = getScore(a);
+      final scoreB = getScore(b);
       if (scoreA != scoreB) return scoreA.compareTo(scoreB);
-      return a.compareTo(b); // Tri alphabétique pour les ex aequo
+      return a.compareTo(b);
     });
-
     return ['Tous', ...cats];
   }
 
-  // Category styling handled by Event.getCategoryStyle
-
-
-
   void _openEventDetail(Event event) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (_, __, ___) => EventDetailsScreen(event: event),
-        transitionsBuilder: (_, animation, __, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-            child: child,
-          );
-        },
-      ),
-    );
+    Navigator.push(context, AppRoutes.slideUp(EventDetailsScreen(event: event)));
   }
 
   void _showCalendarPicker() {
@@ -330,11 +308,11 @@ class _MapScreenState extends State<MapScreen> {
 
   void _cycleCategoryFilter() {
     setState(() {
-      int currentIndex = _categories.indexOf(_selectedCategory);
-      if (currentIndex == -1 || currentIndex == _categories.length - 1) {
-        _selectedCategory = _categories[0]; // 'Tous'
+      int currentIndex = _cachedCategories.indexOf(_selectedCategory);
+      if (currentIndex == -1 || currentIndex == _cachedCategories.length - 1) {
+        _selectedCategory = _cachedCategories[0]; // 'Tous'
       } else {
-        _selectedCategory = _categories[currentIndex + 1];
+        _selectedCategory = _cachedCategories[currentIndex + 1];
       }
       _selectedEvents = [];
     });
@@ -863,12 +841,7 @@ class _MapScreenState extends State<MapScreen> {
                 itemCount: _selectedEvents.length,
                 itemBuilder: (context, index) {
                   final ev = _selectedEvents[index];
-                  String distanceStr = '';
-                  if (ev.distance != null) {
-                    distanceStr = ev.distance! < 1.0 
-                        ? '${(ev.distance! * 1000).toInt()} m'
-                        : '${ev.distance!.toStringAsFixed(1)} km';
-                  }
+                  final distanceStr = ev.distanceLabelShort;
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: GestureDetector(
@@ -942,18 +915,22 @@ class _MapScreenState extends State<MapScreen> {
                                                   return Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                                     decoration: BoxDecoration(
-                                                      color: color.withValues(alpha: 0.15),
+                                                      color: color.withValues(alpha: 0.30),
                                                       borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(
+                                                        color: color.withValues(alpha: 0.5),
+                                                        width: 0.5,
+                                                      ),
                                                     ),
                                                     child: Row(
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
-                                                        Icon(icon, color: color, size: 12),
+                                                        Icon(icon, color: Colors.white, size: 12),
                                                         const SizedBox(width: 4),
                                                         Text(
                                                           ev.segmentLabel.toUpperCase(),
                                                           style: GoogleFonts.outfit(
-                                                            color: color,
+                                                            color: Colors.white,
                                                             fontSize: 11,
                                                             fontWeight: FontWeight.w800,
                                                             letterSpacing: 0.5,

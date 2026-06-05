@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
@@ -18,9 +19,13 @@ class EventCard extends StatefulWidget {
 }
 
 class _EventCardState extends State<EventCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+
+  // Favourite bounce animation
+  late AnimationController _favController;
+  late Animation<double> _favScale;
 
   @override
   void initState() {
@@ -32,18 +37,27 @@ class _EventCardState extends State<EventCard>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+
+    // Bounce animation for favourite — overshoot like Instagram
+    _favController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _favScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 0.85), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.85, end: 1.0), weight: 40),
+    ]).animate(CurvedAnimation(parent: _favController, curve: Curves.easeOut));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _favController.dispose();
     super.dispose();
   }
 
-  static String _monthAbbr(int month) {
-    const months = ['', 'JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEP', 'OCT', 'NOV', 'DÉC'];
-    return months[month];
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +69,7 @@ class _EventCardState extends State<EventCard>
       },
       onTapUp: (_) {
         _controller.reverse();
+        HapticFeedback.lightImpact();
         widget.onTap();
       },
       onTapCancel: () => _controller.reverse(),
@@ -159,7 +174,7 @@ class _EventCardState extends State<EventCard>
                         ),
                       ),
                       Text(
-                        _monthAbbr(widget.event.dateStart.month),
+                        Event.monthAbbr(widget.event.dateStart.month).toUpperCase(),
                         style: GoogleFonts.outfit(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 11,
@@ -196,26 +211,35 @@ class _EventCardState extends State<EventCard>
                         final isFav = favorites.contains(widget.event.id.toString());
                         return GestureDetector(
                           onTap: () async {
+                            HapticFeedback.mediumImpact();
+                            _favController.forward(from: 0.0);
                             await FavoriteService.toggleFavorite(widget.event.id.toString());
                           },
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.4),
-                                    width: 1.5,
+                          child: AnimatedBuilder(
+                            animation: _favScale,
+                            builder: (context, child) => Transform.scale(
+                              scale: _favScale.value,
+                              child: child,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isFav ? const Color(0xFFFF0000) : const Color(0xFFFF0000).withValues(alpha: 0.4),
+                                      width: 1.5,
+                                    ),
                                   ),
-                                ),
-                                child: Icon(
-                                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                  color: Colors.white,
-                                  size: 20,
+                                  child: Icon(
+                                    isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ),
@@ -225,7 +249,7 @@ class _EventCardState extends State<EventCard>
                     ),
                   ],
                 ),
-              ),              // Text Content (Bottom)
+              ),              // Text Content (Bottom)
               Positioned(
                 bottom: 20,
                 left: 20,
@@ -281,9 +305,7 @@ class _EventCardState extends State<EventCard>
                           const Icon(Icons.near_me_rounded, color: Colors.blueAccent, size: 16),
                           const SizedBox(width: 4),
                           Text(
-                            widget.event.distance! < 1.0 
-                                ? 'à ${(widget.event.distance! * 1000).toInt()} m de vous' 
-                                : 'à ${widget.event.distance!.toStringAsFixed(1)} km de vous',
+                            widget.event.distanceLabel,
                             style: GoogleFonts.outfit(
                               color: Colors.white,
                               fontSize: 13,
