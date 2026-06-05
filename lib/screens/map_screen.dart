@@ -119,7 +119,27 @@ class _MapScreenState extends State<MapScreen> {
 
   List<String> get _categories {
     final cats = _events.map((e) => e.segmentLabel).where((e) => e.isNotEmpty).toSet().toList();
-    cats.sort();
+    
+    cats.sort((a, b) {
+      final aLower = a.toLowerCase();
+      final bLower = b.toLowerCase();
+      
+      int getScore(String cat) {
+        if (cat.contains('polyphonie')) return 1;
+        if (cat.contains('concert')) return 2;
+        if (cat.contains('festival')) return 3;
+        if (cat.contains('soirée') || cat.contains('soiree') || cat.contains('dj')) return 4;
+        if (cat.contains('theatre') || cat.contains('théâtre') || cat.contains('danse')) return 999; // Toujours en dernier
+        return 50; // Autres catégories au milieu
+      }
+
+      int scoreA = getScore(aLower);
+      int scoreB = getScore(bLower);
+
+      if (scoreA != scoreB) return scoreA.compareTo(scoreB);
+      return a.compareTo(b); // Tri alphabétique pour les ex aequo
+    });
+
     return ['Tous', ...cats];
   }
 
@@ -764,7 +784,7 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU BOUTON GPS (Bas Centre, au-dessus du compteur) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 160, // Ajusté pour un "léger espace" avec le compteur
+            bottom: MediaQuery.of(context).padding.bottom + 160, // Calcul exact: menu (70) + margin (20) + gap GPS (70)
             left: 0,
             right: 0,
             child: Center(
@@ -793,7 +813,7 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU COMPTEUR D'EVENEMENTS (Bas Centre) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 110, // Juste au-dessus du menu bottom
+            bottom: MediaQuery.of(context).padding.bottom + 110, // Calcul exact: menu (70) + margin (20) + gap (20)
             left: 0, // IMPORTANT: Ajouté pour que le Center fonctionne !
             right: 0, // IMPORTANT: Ajouté pour que le Center fonctionne !
             child: IgnorePointer(
