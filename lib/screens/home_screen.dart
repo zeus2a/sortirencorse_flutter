@@ -46,6 +46,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // Quick temporal filter: 'all' | 'today' | 'weekend' | 'week'
   String _quickFilter = 'all';
 
+  // ── Mode hors-ligne ──
+  bool _isOffline = false;
+  DateTime? _cachedAt;
+
   Position? _userPosition;
   bool _showLocationToast = false;
 
@@ -275,53 +279,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _isLoading = true;
       _hasError = false;
-      _displayLimit = 50; // Reset limit on refresh
+      _displayLimit = 50;
     });
 
-    // 1. Chargement depuis le cache local (Instantané)
     try {
-      final cachedEvents = await _apiService.getCachedEvents();
-      if (cachedEvents.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _allEvents = cachedEvents;
-            _isLoading = false;
+      final result = await _apiService.fetchWithFallback();
 
-            // Global distance calculation for Map and Favorites
-            if (_userPosition != null && SettingsScreen.isGpsEnabled) {
-              _allEvents = _allEvents.map((e) {
-                if (e.lat != 0.0 && e.lng != 0.0) {
-                  final d = Geolocator.distanceBetween(
-                      _userPosition!.latitude, _userPosition!.longitude, e.lat, e.lng);
-                  return e.copyWith(distance: d / 1000);
-                }
-                return e;
-              }).toList();
-            }
-          });
-          _runSmartSearch();
-        }
+      if (!mounted) return;
+
+      var events = result.events;
+
+      // Calcul distance si GPS actif
+      if (_userPosition != null && SettingsScreen.isGpsEnabled) {
+        events = events.map((e) {
+          if (e.lat != 0.0 && e.lng != 0.0) {
+            final d = Geolocator.distanceBetween(
+                _userPosition!.latitude, _userPosition!.longitude,
+                e.lat, e.lng);
+            return e.copyWith(distance: d / 1000);
+          }
+          return e;
+        }).toList();
       }
-    } catch (e) {
-      debugPrint('Erreur lecture cache');
-    }
 
-    // 2. Chargement depuis le serveur (Arrière-plan)
-    try {
-      final events = await _apiService.fetchEvents();
+      setState(() {
+        _allEvents = events;
+        _isLoading = false;
+        _hasError = false;
+        _isOffline = result.isFromCache;
+        _cachedAt = result.cachedAt;
+      });
+      _runSmartSearch();
+    } catch (e) {
       if (mounted) {
-        setState(() {
-          _allEvents = events;
-          _isLoading = false;
-          _hasError = false;
-        });
-        _runSmartSearch();
-      }
-    } catch (e) {
-      if (mounted && _allEvents.isEmpty) {
         setState(() {
           _hasError = true;
           _isLoading = false;
+          _isOffline = false;
         });
       }
     }
@@ -1400,6 +1394,95 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         : <Event>[];
 
     return [
+      // ── Bannière Mode Hors-ligne ──────────────────────────────────
+      if (_isOffline)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9E00).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFFF9E00).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9E00).withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.wifi_off_rounded,
+                          color: Color(0xFFFF9E00),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mode hors-ligne',
+                              style: GoogleFonts.outfit(
+                                color: const Color(0xFFFF9E00),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (_cachedAt != null)
+                              Text(
+                                'Dernière mise à jour : ${_cachedAt!.day.toString().padLeft(2, '0')}/${_cachedAt!.month.toString().padLeft(2, '0')} à ${_cachedAt!.hour.toString().padLeft(2, '0')}h${_cachedAt!.minute.toString().padLeft(2, '0')}',
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white60,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          _refreshEvents();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF9E00).withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFFF9E00).withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Text(
+                            'Réessayer',
+                            style: GoogleFonts.outfit(
+                              color: const Color(0xFFFF9E00),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       _buildQuickFilterChips(isDark),
       if (nearbyEvents.isNotEmpty) _buildNearbySection(nearbyEvents, isDark),
       SliverPadding(
