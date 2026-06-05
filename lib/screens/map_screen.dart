@@ -348,7 +348,7 @@ class _MapScreenState extends State<MapScreen> {
     return GestureDetector(
       onTap: isLocked ? null : _cycleTemporalFilter,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: isActive 
               ? (isDark ? Colors.black.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.8))
@@ -361,34 +361,40 @@ class _MapScreenState extends State<MapScreen> {
         ),
         alignment: Alignment.center,
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(isActive ? Icons.event_available_rounded : Icons.calendar_today_rounded, 
                  color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87), 
                  size: 14),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-                if (subLabel != null)
+            const SizedBox(width: 4),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    subLabel,
+                    label,
                     style: GoogleFonts.outfit(
-                      color: const Color(0xFFFF9E00).withValues(alpha: 0.8),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
+                      fontSize: 13,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                  if (subLabel != null)
+                    Text(
+                      subLabel,
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFFFF9E00).withValues(alpha: 0.8),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
             ),
           ],
         ),
@@ -396,13 +402,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  String _shortenCategory(String cat) {
+    if (cat.toLowerCase().contains('culturel')) return 'Culture';
+    return cat;
+  }
+
   Widget _buildUnifiedCategoryChip(bool isDark) {
     final isActive = _selectedCategory != 'Tous';
+    final displayName = isActive ? _shortenCategory(_selectedCategory) : 'Tous les genres';
     
     return GestureDetector(
       onTap: _cycleCategoryFilter,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        width: 150, // Fixe la taille à 150 pixels
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: isActive 
               ? (isDark ? Colors.black.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.8))
@@ -413,9 +426,9 @@ class _MapScreenState extends State<MapScreen> {
                   ? const Color(0xFFFF9E00)
                   : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2))),
         ),
-        alignment: Alignment.center,
+        alignment: Alignment.center, // Centre le texte si la cellule est plus grande
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (isActive) ...[
               Icon(
@@ -423,17 +436,21 @@ class _MapScreenState extends State<MapScreen> {
                 color: const Color(0xFFFF9E00),
                 size: 14,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
             ] else ...[
                Icon(Icons.category_rounded, color: isDark ? Colors.white70 : Colors.black87, size: 14),
-               const SizedBox(width: 6),
+               const SizedBox(width: 4),
             ],
-            Text(
-              isActive ? _selectedCategory : 'Tous les genres',
-              style: GoogleFonts.outfit(
-                color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                displayName,
+                style: GoogleFonts.outfit(
+                  color: isActive ? const Color(0xFFFF9E00) : (isDark ? Colors.white70 : Colors.black87),
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -721,17 +738,15 @@ class _MapScreenState extends State<MapScreen> {
               // 2. Ligne de Filtres (Chips)
               SizedBox(
                 height: 48,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
+                child: Row(
                   children: [
                     // Chip Temporal Actif
-                    _buildUnifiedTemporalChip(isDark),
+                    Expanded(child: _buildUnifiedTemporalChip(isDark)),
                     const SizedBox(width: 8),
                     Container(width: 1, height: 20, color: Colors.grey.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(vertical: 8)),
                     const SizedBox(width: 8),
                     // Categories Unified Chip
-                    _buildUnifiedCategoryChip(isDark),
+                    Expanded(child: _buildUnifiedCategoryChip(isDark)),
                   ],
                 ),
               ),
@@ -742,7 +757,7 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU BOUTON GPS (Bas Centre, au-dessus du compteur) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 220, // Centré au-dessus du compteur
+            bottom: 240, // Plus haut pour s'éloigner du compteur
             left: 0,
             right: 0,
             child: Center(
@@ -771,9 +786,7 @@ class _MapScreenState extends State<MapScreen> {
         // --- NOUVEAU COMPTEUR D'EVENEMENTS (Bas Centre) ---
         if (_selectedEvents.isEmpty)
           Positioned(
-            bottom: 160,
-            left: 0,
-            right: 0,
+            bottom: 180, // Remonté à 180 pour s'éloigner du menu du bas
             child: IgnorePointer(
               child: Center(
                 child: Container(
