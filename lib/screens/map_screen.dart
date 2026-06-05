@@ -51,14 +51,7 @@ class _MapScreenState extends State<MapScreen> {
     });
     if (widget.initialEvents != null) {
       _userPosition = widget.initialPosition;
-      var events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
-      if (_userPosition != null && SettingsScreen.isGpsEnabled) {
-        events = events.map((e) {
-          final d = Geolocator.distanceBetween(_userPosition!.latitude, _userPosition!.longitude, e.lat, e.lng);
-          return e.copyWith(distance: d / 1000); // Store as km, matching SmartSearch
-        }).toList();
-      }
-      _events = events;
+      _events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
       _isLoading = false;
     } else {
       _isLoading = false;
@@ -79,14 +72,7 @@ class _MapScreenState extends State<MapScreen> {
       if (widget.initialEvents != null) {
         setState(() {
           _userPosition = widget.initialPosition;
-          var events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
-          if (_userPosition != null && SettingsScreen.isGpsEnabled) {
-            events = events.map((e) {
-              final d = Geolocator.distanceBetween(_userPosition!.latitude, _userPosition!.longitude, e.lat, e.lng);
-              return e.copyWith(distance: d / 1000);
-            }).toList();
-          }
-          _events = events;
+          _events = widget.initialEvents!.where((e) => e.lat != 0.0 && e.lng != 0.0).toList();
         });
       }
     }
@@ -390,7 +376,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
               subdomains: const ['a', 'b', 'c', 'd'],
               userAgentPackageName: 'com.zeus2a.sortirencorse',
               maxZoom: 19,

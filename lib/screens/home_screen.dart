@@ -247,6 +247,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       Position position = await Geolocator.getCurrentPosition();
       setState(() {
         _userPosition = position;
+        // Global distance calculation for Map and Favorites
+        if (SettingsScreen.isGpsEnabled) {
+          _allEvents = _allEvents.map((e) {
+            if (e.lat != 0.0 && e.lng != 0.0) {
+              final d = Geolocator.distanceBetween(
+                  position.latitude, position.longitude, e.lat, e.lng);
+              return e.copyWith(distance: d / 1000);
+            }
+            return e;
+          }).toList();
+        }
       });
       _runSmartSearch(); // Re-sort with distance
     } catch (e) {
@@ -269,6 +280,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           setState(() {
             _allEvents = cachedEvents;
             _isLoading = false;
+
+            // Global distance calculation for Map and Favorites
+            if (_userPosition != null && SettingsScreen.isGpsEnabled) {
+              _allEvents = _allEvents.map((e) {
+                if (e.lat != 0.0 && e.lng != 0.0) {
+                  final d = Geolocator.distanceBetween(
+                      _userPosition!.latitude, _userPosition!.longitude, e.lat, e.lng);
+                  return e.copyWith(distance: d / 1000);
+                }
+                return e;
+              }).toList();
+            }
           });
           _runSmartSearch();
         }
@@ -570,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               _buildFeedTab(isGpsActive, isDark),
               MapScreen(initialEvents: _allEvents, initialPosition: _userPosition),
               const NetworkScreen(),
-              const FavoritesScreen(),
+              FavoritesScreen(allEvents: _allEvents),
             ],
           ),
 
@@ -712,7 +735,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             parent: BouncingScrollPhysics()),
         slivers: [
           SliverAppBar(
-            expandedHeight: 235.0,
+            expandedHeight: 255.0,
             floating: true,
             pinned: true,
             automaticallyImplyLeading: false,
@@ -969,7 +992,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
                           
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
                           // Row 4: GPS pill + event counter
                           FadeTransition(
@@ -982,8 +1005,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: isGpsActive
-                                        ? Colors.greenAccent.withValues(alpha: 0.25)
-                                        : Colors.redAccent.withValues(alpha: 0.25),
+                                        ? Colors.greenAccent.withValues(alpha: 0.4)
+                                        : Colors.redAccent.withValues(alpha: 0.4),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
@@ -993,9 +1016,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         isGpsActive
                                             ? Icons.my_location_rounded
                                             : Icons.location_off_rounded,
-                                        color: isGpsActive
-                                            ? Colors.greenAccent
-                                            : Colors.redAccent,
+                                        color: Colors.white,
                                         size: 14,
                                       ),
                                       const SizedBox(width: 4),
@@ -1004,9 +1025,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                             ? 'GPS actif'
                                             : 'GPS désactivé',
                                         style: GoogleFonts.outfit(
-                                          color: isGpsActive
-                                              ? Colors.greenAccent
-                                              : Colors.redAccent,
+                                          color: Colors.white,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -1022,7 +1041,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
                                       color:
-                                          Colors.cyanAccent.withValues(alpha: 0.25),
+                                          const Color(0xFF9D4EDD).withValues(alpha: 0.4),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
@@ -1030,7 +1049,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       children: [
                                         const Icon(
                                             Icons.event_available_rounded,
-                                            color: Colors.cyanAccent,
+                                            color: Colors.white,
                                             size: 14),
                                         const SizedBox(width: 4),
                                         RichText(
@@ -1039,7 +1058,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               TextSpan(
                                                 text: '${_allEvents.length} ',
                                                 style: GoogleFonts.outfit(
-                                                  color: Colors.cyanAccent,
+                                                  color: Colors.white,
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w900,
                                                 ),
@@ -1047,7 +1066,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               TextSpan(
                                                 text: 'événements à découvrir',
                                                 style: GoogleFonts.outfit(
-                                                  color: Colors.cyanAccent,
+                                                  color: Colors.white,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -1062,8 +1081,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
 
-                          const SizedBox(height: 4),
-                          const Spacer(),
+                          const SizedBox(height: 16),
 
                           // Search Bar
                           SlideTransition(

@@ -134,7 +134,7 @@ class _EventCardState extends State<EventCard>
                 left: 20,
                 child: Container(
                   width: 58,
-                  height: 64,
+                  height: 58,
                   decoration: BoxDecoration(
                     color: const Color(0xFF9D4EDD),
                     borderRadius: BorderRadius.circular(16),
@@ -158,7 +158,6 @@ class _EventCardState extends State<EventCard>
                           height: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 1),
                       Text(
                         _monthAbbr(widget.event.dateStart.month),
                         style: GoogleFonts.outfit(

@@ -2,75 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:geolocator/geolocator.dart';
 import '../services/favorite_service.dart';
-import '../services/api_service.dart';
 import '../models/event.dart';
 import 'event_details_screen.dart';
-import 'settings_screen.dart';
 
-class FavoritesScreen extends StatefulWidget {
-  const FavoritesScreen({super.key});
-
-  @override
-  State<FavoritesScreen> createState() => _FavoritesScreenState();
-}
-
-class _FavoritesScreenState extends State<FavoritesScreen> {
-  List<Event> _allEvents = [];
-  bool _isLoading = true;
-  Position? _userPosition;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEvents();
-    _getUserLocation();
-  }
-
-  Future<void> _getUserLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
-
-    try {
-      Position position = await Geolocator.getCurrentPosition();
-      if (mounted) {
-        setState(() {
-          _userPosition = position;
-        });
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  Future<void> _loadEvents() async {
-    try {
-      final events = await ApiService().fetchEvents();
-      if (mounted) {
-        setState(() {
-          _allEvents = events;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
+class FavoritesScreen extends StatelessWidget {
+  final List<Event> allEvents;
+  const FavoritesScreen({super.key, required this.allEvents});
 
   static String _monthAbbr(int month) {
     const months = ['', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     return months[month];
   }
 
-  void _openEventDetail(Event event) {
+  void _openEventDetail(BuildContext context, Event event) {
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -103,23 +48,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF9E00)))
-          : ValueListenableBuilder<List<String>>(
+      body: ValueListenableBuilder<List<String>>(
               valueListenable: FavoriteService.favoritesNotifier,
               builder: (context, favoriteIds, child) {
-                final favoriteEvents = _allEvents
+                final favoriteEvents = allEvents
                     .where((e) => favoriteIds.contains(e.id.toString()))
-                    .map((e) {
-                      if (_userPosition != null && SettingsScreen.isGpsEnabled) {
-                        double distanceInMeters = Geolocator.distanceBetween(
-                            _userPosition!.latitude, _userPosition!.longitude,
-                            e.lat, e.lng);
-                        return e.copyWith(distance: distanceInMeters / 1000);
-                      }
-                      return e;
-                    })
                     .toList();
 
                 if (favoriteEvents.isEmpty) {
@@ -158,10 +91,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   itemCount: favoriteEvents.length,
                   itemBuilder: (context, index) {
                     final event = favoriteEvents[index];
-                    final catStyle = Event.getCategoryStyle(event.segmentLabel);
-
                     return GestureDetector(
-                      onTap: () => _openEventDetail(event),
+                      onTap: () => _openEventDetail(context, event),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
@@ -257,33 +188,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Type badge
-                                      Container(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 6),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: (catStyle['color'] as Color)
-                                              .withValues(alpha: 0.15),
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                          border: Border.all(
-                                              color:
-                                                  (catStyle['color'] as Color)
-                                                      .withValues(alpha: 0.3)),
-                                        ),
-                                        child: Text(
-                                          event.segmentLabel.toUpperCase(),
-                                          style: GoogleFonts.outfit(
-                                            color:
-                                                catStyle['color'] as Color,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                      ),
+
                                       // Title
                                       Text(
                                         event.title,
